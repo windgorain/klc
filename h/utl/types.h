@@ -159,8 +159,8 @@ typedef struct {
 typedef LLDATA_S FILE_MEM_S;
 
 typedef struct {
-    U32 min;
-    U32 max;
+    U32 begin;
+    U32 end;
 }U32_RANGE_S;
 
 #define BS_DATA_ZERO(_pstData) do {(_pstData)->pucData = NULL; (_pstData)->uiLen = 0;} while(0)
@@ -292,7 +292,7 @@ typedef enum
 #else
 #define container_of(ptr, type, member) ({			\
 	const typeof(((type *)0)->member) * __mptr = (ptr);	\
-	(type *)((char *)__mptr - offsetof(type, member)); })
+	(type *)(((char *)__mptr) - offsetof(type, member)); })
 #endif
 #endif
 

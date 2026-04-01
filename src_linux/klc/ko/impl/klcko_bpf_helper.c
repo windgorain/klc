@@ -1,8 +1,8 @@
-/******************************************************************
-*   Created by LiXingang
-*   Description: 
-*
-******************************************************************/
+/******************************************************************************
+* Copyright (C), Xingang.Li
+* Author:      Xingang.Li  Version: 1.0
+* Description:
+******************************************************************************/
 #include "klcko_impl.h"
 #include "utl/bpf_helper_utl.h"
 #include "utl/ulc_helper_id.h"
@@ -17,6 +17,12 @@
 
 static void * (*g_klcko_module_alloc)(int exe_size) = NULL;
 static void (*g_klcko_module_free)(void *m) = NULL;
+
+long _ulc_ret_0(void);
+long _ulc_ret_1(void);
+long _ulc_ret_2(void);
+long _ulc_ret_65534(void);
+long _ulc_ret_n1(void);
 
 long _ulc_ret_0(void)
 {
@@ -51,7 +57,11 @@ static char * _ulc_ret_blank_str(void)
 static void _ulc_init_module_alloc(void)
 {
     g_klcko_module_alloc = KLCKO_GetKV(KLC_KV_MODULE_ALLOC);
-    g_klcko_module_free  = KLCKO_GetKV(KLC_KV_MODULE_FREE);
+    g_klcko_module_free = KLCKO_GetKV(KLC_KV_MODULE_FREE);
+    if (! g_klcko_module_alloc) {
+        g_klcko_module_alloc = KLCKO_GetKV(KLC_KV_JIT_ALLOC);
+        g_klcko_module_free = KLCKO_GetKV(KLC_KV_JIT_FREE);
+    }
 }
 
 static void * ulc_sys_vmalloc(int size)
@@ -242,14 +252,22 @@ static void * ulc_mmap_map(void *addr, U64 len, U64 flag, int fd, U64 off)
     int exe_size = round_up(len, PAGE_SIZE);
 
     
-    return ulc_sys_module_alloc(exe_size);
+    void *m = ulc_sys_module_alloc(exe_size);
+    if (! m) {
+        return ((void *) -1);
+    }
+    return m;
 }
 
-static void ulc_mmap_munmap(void *m, U64 len)
+static void ulc_mmap_unmap(void *m, U64 len)
 {
     int exe_size = round_up(len, PAGE_SIZE);
     int (*func1)(void *, int) = KLCKO_GetKV(KLC_KV_SET_MEM_NX);
     int (*func2)(void *, int) = KLCKO_GetKV(KLC_KV_SET_MEM_RW); 
+
+    if ((! m) || (m == (void*)-1)) {
+        return;
+    }
 
     if ((! func1) || (! func2)) {
         return;
@@ -263,18 +281,27 @@ static void ulc_mmap_munmap(void *m, U64 len)
 
 static int ulc_mmap_mprotect(void *m, int size, U32 flag)
 {
+    int ret;
+    struct vm_struct *vm;
+
     int exe_size = round_up(size, PAGE_SIZE);
     int (*func1)(void *, int) = KLCKO_GetKV(KLC_KV_SET_MEM_RO); 
     int (*func2)(void *, int) = KLCKO_GetKV(KLC_KV_SET_MEM_X); 
+    void * (*func3)(void *) = KLCKO_GetKV(KLC_KV_FIND_VM_AREA);
 
-    if ((! func1) || (! func2)) {
+    if ((! func1) || (! func2) || (! func3)) {
         return -1;
     }
 
-    func1(m, exe_size/PAGE_SIZE);
-    func2(m, exe_size/PAGE_SIZE);
+    vm = func3(m);
+    if (vm) {
+		vm->flags |= VM_FLUSH_RESET_PERMS;
+    }
 
-    return 0;
+    ret = func1(m, exe_size/PAGE_SIZE);
+    ret |= func2(m, exe_size/PAGE_SIZE);
+
+    return ret;
 }
 
 static void ulc_sys_rcu_call(void *rcu, void *func)
@@ -302,7 +329,6 @@ static void ulc_sys_rcu_barrier(void)
 {
     rcu_barrier();
 }
-
 
 static int ulc_init_timer(void *timer_node, void *timeout_func, int node_size)
 {
@@ -413,7 +439,7 @@ static const void * g_bpf_sys_helpers[BPF_SYS_HELPER_COUNT] = {
     [_(ULC_ID_DEL_TIMER)] = ulc_del_timer,
 
     [_(ULC_ID_MMAP_MAP)] = ulc_mmap_map,
-    [_(ULC_ID_MMAP_UNMAP)] = ulc_mmap_munmap,
+    [_(ULC_ID_MMAP_UNMAP)] = ulc_mmap_unmap,
     [_(ULC_ID_MMAP_MPROTECT)] = ulc_mmap_mprotect,
 
     [_(ULC_ID_SET_TRUSTEESHIP)] = ulc_set_trusteeship,

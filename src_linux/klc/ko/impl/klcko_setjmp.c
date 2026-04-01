@@ -51,9 +51,9 @@ asm (
 asm (
 "   .text\n"
 "   .balign 8\n"
-"   .type   ulc_sys_setjmp, @function\n"
-"   .globl  ulc_sys_setjmp\n"
-" ulc_sys_setjmp:"
+"   .type   klcko_setjmp, @function\n"
+"   .globl  klcko_setjmp\n"
+" klcko_setjmp:"
 "   mov	x1, sp\n"
 "   stp	x18, x19, [x0, #0]\n"
 "   stp	x20, x21, [x0, #16]\n"
@@ -64,15 +64,15 @@ asm (
 "   stp	x30, x1,  [x0, #96]\n"
 "   mov	x0, #0\n" 			
 "   br	x30\n"
-"	.size		ulc_sys_setjmp, .-ulc_sys_setjmp\n"
+"	.size		klcko_setjmp, .-klcko_setjmp\n"
 );
 
 asm (
 "   .text\n"
 "   .balign 8\n"
-"   .type ulc_sys_longjmp, @function\n"
-"   .globl ulc_sys_longjmp\n"
-" ulc_sys_longjmp:"
+"   .type klcko_longjmp, @function\n"
+"   .globl klcko_longjmp\n"
+" klcko_longjmp:"
 "   ldp	x18, x19, [x0, #0]\n"
 "   ldp	x20, x21, [x0, #16]\n"
 "   ldp	x22, x23, [x0, #32]\n"
@@ -86,7 +86,7 @@ asm (
 "   mov	x0, #1\n"
 " 1:"
 "   br	x30\n"
-"	.size		ulc_sys_longjmp, .-ulc_sys_longjmp\n"
+"	.size		klcko_longjmp, .-klcko_longjmp\n"
 );
 #endif
 

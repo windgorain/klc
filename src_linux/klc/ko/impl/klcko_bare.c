@@ -93,19 +93,55 @@ static int _mybpf_bare_check(MYBPF_BARE_HDR_S *hdr, int mem_len, const void **tm
     return _mybpf_bare_check_depends(hdr, tmp_helpers);
 }
 
+static void * _mybpf_bare_alloc(int size)
+{
+    void * (*jit_alloc)(int)= KLCKO_GetKV(KLC_KV_JIT_ALLOC);
+    if (! jit_alloc) {
+        return NULL;
+    }
+
+    return jit_alloc(size);
+}
+
+static void _mybpf_bare_free(void *mem)
+{
+    void (*jit_free)(void*)= KLCKO_GetKV(KLC_KV_JIT_FREE);
+    if (! jit_free) {
+        return;
+    }
+
+    jit_free(mem);
+}
+
 static int _mybpf_bare_make_exe(void *fn, int pages)
 {
     int (*func1)(void *, int) = KLCKO_GetKV(KLC_KV_SET_MEM_RO); 
     int (*func2)(void *, int) = KLCKO_GetKV(KLC_KV_SET_MEM_X); 
+    void * (*func3)(void *) = KLCKO_GetKV(KLC_KV_FIND_VM_AREA);
 
-    if ((! func1) || (! func2)) {
+    if ((! func1) || (! func2) || (! func3)) {
+        KO_Print("Can't get func\n");
         return KO_ERR_FAIL;
     }
 
-    func1(fn, pages);
-    func2(fn, pages);
+    struct vm_struct *vm = func3(fn);
+    if (vm) {
+		vm->flags |= VM_FLUSH_RESET_PERMS;
+    }
 
-    return 0;
+    int ret = func1(fn, pages);
+    if (ret < 0) {
+        KO_Print("func1 error:%d\n", ret);
+        return ret;
+    }
+
+    ret = func2(fn, pages);
+    if (ret < 0) {
+        KO_Print("func2 error:%d\n", ret);
+        return ret;
+    }
+
+    return ret;
 }
 
 static int _mybpf_bare_load(void *data, int len, const void **tmp_helpers, OUT MYBPF_BARE_S *bare)
@@ -141,7 +177,8 @@ static int _mybpf_bare_load(void *data, int len, const void **tmp_helpers, OUT M
     alloc_size = round_up(prog_size, PAGE_SIZE);
     pages = alloc_size / PAGE_SIZE;
 
-    fn = kmalloc(alloc_size, GFP_ATOMIC);
+    
+    fn = _mybpf_bare_alloc(alloc_size);
     if (! fn) {
         _mybpf_bare_free_bss(bss);
         KO_Print("Can't malloc prog memory\n");
@@ -151,7 +188,7 @@ static int _mybpf_bare_load(void *data, int len, const void **tmp_helpers, OUT M
     memcpy(fn, prog_begin, prog_size);
     if (_mybpf_bare_make_exe(fn, pages) < 0) {
         _mybpf_bare_free_bss(bss);
-        kfree(fn);
+        _mybpf_bare_free(fn);
         KO_Print("Make exe failed\n");
         return KO_ERR_FAIL;
     }
@@ -188,7 +225,7 @@ void MYBPF_UnloadBare(MYBPF_BARE_S *bare)
 {
     if (bare) {
         _mybpf_bare_free_bss(bare->ctx.global_map_data);
-        kfree(bare->prog);
+        _mybpf_bare_free(bare->prog);
         memset(bare, 0, sizeof(*bare));
     }
 }

@@ -1,8 +1,8 @@
-/*================================================================
-*   Created by LiXingang
-*   Description: 
-*
-================================================================*/
+/******************************************************************************
+* Copyright (C), Xingang.Li
+* Author:      Xingang.Li  Version: 1.0
+* Description:
+******************************************************************************/
 #include "klcko_lib.h"
 #include "klcko_pt.h"
 #include "ko/ko_utl.h"
@@ -10,13 +10,17 @@
 
 #define KLCHELP_CLASS(cmd) (((cmd) >> 16) & 0xff)
 
+u64 bpf_map_update_ele(u64 cmd, u64 p2, u64 p3, u64 p4, u64 p5);
+
 static int g_klc_base_enabled = 0;
 static PF_KLC_HELPER g_klc_base_funcs[KLCKO_BASE_FUNC_NUM];
 static PF_KLC_HELPER g_klc_base_agent_func[1000];
 
 struct bpf_verifier_ops g_klc_hook_ops;
 
-#define MDEF_DEF_FUNC(_str, _id) U64 klc_base_agent##_str(U64 p1, U64 p2, U64 p3, U64 p4, U64 p5) { \
+#define MDEF_DEF_FUNC(_str, _id)  \
+    U64 klc_base_agent##_str(U64 p1, U64 p2, U64 p3, U64 p4, U64 p5); \
+    U64 klc_base_agent##_str(U64 p1, U64 p2, U64 p3, U64 p4, U64 p5) { \
     PF_KLC_HELPER f = g_klc_base_agent_func[_id]; \
     if (! f) { return -1LL; } \
     return f(p1, p2, p3, p4, p5); \
@@ -42,7 +46,6 @@ static inline u64 _klc_base_call(u64 cmd, u64 p2, u64 p3, u64 p4, u64 p5)
 
     return ret;
 }
-
 
 u64 bpf_map_update_ele(u64 cmd, u64 p2, u64 p3, u64 p4, u64 p5)
 {

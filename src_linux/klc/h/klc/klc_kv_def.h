@@ -1,8 +1,8 @@
-/******************************************************************
-*   Created by LiXingang
-*   Description: 
-*
-******************************************************************/
+/******************************************************************************
+* Copyright (C), Xingang.Li
+* Author:      Xingang.Li  Version: 1.0
+* Description:
+******************************************************************************/
 #ifndef _KLC_KV_DEF_H
 #define _KLC_KV_DEF_H
 #ifdef __cplusplus
@@ -20,6 +20,9 @@ enum {
     KLC_KV_BPF_MAP_LOOKUP,
     KLC_KV_BPF_MAP_UPDATE,
     KLC_KV_BPF_MAP_DELETE,
+    KLC_KV_FIND_VM_AREA,
+    KLC_KV_JIT_ALLOC,
+    KLC_KV_JIT_FREE,
 
     KLC_KV_MAX = 1024
 };
