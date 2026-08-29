@@ -115,6 +115,8 @@ static void _mybpf_bare_free(void *mem)
 
 static int _mybpf_bare_make_exe(void *fn, int pages)
 {
+    int ret;
+    struct vm_struct *vm;
     int (*func1)(void *, int) = KLCKO_GetKV(KLC_KV_SET_MEM_RO); 
     int (*func2)(void *, int) = KLCKO_GetKV(KLC_KV_SET_MEM_X); 
     void * (*func3)(void *) = KLCKO_GetKV(KLC_KV_FIND_VM_AREA);
@@ -124,12 +126,12 @@ static int _mybpf_bare_make_exe(void *fn, int pages)
         return KO_ERR_FAIL;
     }
 
-    struct vm_struct *vm = func3(fn);
+    vm = func3(fn);
     if (vm) {
 		vm->flags |= VM_FLUSH_RESET_PERMS;
     }
 
-    int ret = func1(fn, pages);
+    ret = func1(fn, pages);
     if (ret < 0) {
         KO_Print("func1 error:%d\n", ret);
         return ret;

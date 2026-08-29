@@ -310,7 +310,8 @@ void klcko_get_skb_info(struct sk_buff *skb, OUT KLC_SKB_INFO_S *info)
     info->pkt_type = skb->pkt_type;
     info->tc_at_ingress = skb->tc_at_ingress;
     info->ingress_ifindex = skb->skb_iif;
-    info->ifindex = skb->dev->ifindex;
+    info->ifindex = -1;
+    if (skb->dev) { info->ifindex = skb->dev->ifindex; }
     info->mark = skb->mark;
     info->hash = skb->hash;
     info->napi_id = skb->napi_id;

@@ -19,9 +19,22 @@ typedef int 				INT;
 typedef unsigned char 		UCHAR;
 typedef char			    CHAR;
 typedef char                BOOL_T;
+typedef UINT                VRF_INDEX;
+
+#ifdef IN_WINDOWS 
+    #if PLATFORM_64BIT
+        #define ULONG unsigned long long
+        #define LONG long long
+    #elif PLATFORM_32BIT
+        #define ULONG unsigned long
+        #define LONG long
+    #else
+        #error "error"
+    #endif
+#else
 typedef unsigned long       ULONG;  
 typedef long                LONG;   
-typedef UINT                VRF_INDEX;
+#endif
 
 typedef unsigned char       U8;
 typedef unsigned short      U16;

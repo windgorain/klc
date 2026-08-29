@@ -259,24 +259,26 @@ static void * ulc_mmap_map(void *addr, U64 len, U64 flag, int fd, U64 off)
     return m;
 }
 
-static void ulc_mmap_unmap(void *m, U64 len)
+static int ulc_mmap_unmap(void *m, U64 len)
 {
     int exe_size = round_up(len, PAGE_SIZE);
     int (*func1)(void *, int) = KLCKO_GetKV(KLC_KV_SET_MEM_NX);
     int (*func2)(void *, int) = KLCKO_GetKV(KLC_KV_SET_MEM_RW); 
 
     if ((! m) || (m == (void*)-1)) {
-        return;
+        return 0;
     }
 
     if ((! func1) || (! func2)) {
-        return;
+        return 0;
     }
 
     func1(m, exe_size / PAGE_SIZE);
     func2(m, exe_size / PAGE_SIZE);
 
     ulc_sys_module_free(m);
+
+    return 0;
 }
 
 static int ulc_mmap_mprotect(void *m, int size, U32 flag)

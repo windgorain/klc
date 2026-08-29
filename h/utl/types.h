@@ -36,15 +36,18 @@ extern "C" {
 
 #ifndef ALWAYS_INLINE 
     #ifdef IN_LINUX
-        #define ALWAYS_INLINE __always_inline
+        #define ALWAYS_INLINE inline __attribute__((always_inline))
     #else
         #define ALWAYS_INLINE inline
     #endif
 #endif
 
-
 #ifndef __always_inline 
-#define __always_inline inline
+    #ifdef IN_LINUX
+        #define __always_inline inline __attribute__((always_inline))
+    #else
+        #define __always_inline inline
+    #endif
 #endif
 
 #ifndef CHAR_BIT
