@@ -1,5 +1,5 @@
 pushd src_linux/klc/ko/
 make
-cp *.ko ../../../
+cp *.ko ../../../app/
 popd
 
