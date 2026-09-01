@@ -1,6 +1,6 @@
 #!/bin/bash
 
-KLCTOOL=klctool/klctool-arm64
+KLCTOOL=./klctool/klctool-arm64
 
 sudo mountpoint -q /sys/fs/bpf
 if [ $? != 0 ];then
@@ -16,10 +16,10 @@ sudo insmod klc_base.ko > /dev/null 2>&1
 sudo insmod klc_oscomp.ko
 sudo insmod klc_impl.ko
 
-sudo ./${KLCTOOL} init
-sudo ./${KLCTOOL} load bare spf/bare/spf_loader.[ARCH].bare
-sudo ./${KLCTOOL} load spf -i kbase.spfmap spf/base/spfmap.[ARCH].spf
-sudo ./${KLCTOOL} load spf -i kbase.spfvm spf/base/spfvm.[ARCH].spf
-sudo ./${KLCTOOL} load spf -i kbase.khelper spf/khelper_klc.spf
-sudo ./${KLCTOOL} load spf -i kbase.hookspf spf/hookspf_klc.spf
+sudo ${KLCTOOL} init
+sudo ${KLCTOOL} load bare spf/bare/spf_loader.[ARCH].bare
+sudo ${KLCTOOL} load spf -i kbase.spfmap spf/base/spfmap.[ARCH].spf
+sudo ${KLCTOOL} load spf -i kbase.spfvm spf/base/spfvm.[ARCH].spf
+sudo ${KLCTOOL} load spf -i kbase.khelper spf/khelper_klc.spf
+sudo ${KLCTOOL} load spf -i kbase.hookspf spf/hookspf_klc.spf
 

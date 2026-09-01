@@ -1,8 +1,8 @@
-/*================================================================
-*   Created by LiXingang, Copyright LiXingang
-*   Description: 
-*
-================================================================*/
+/******************************************************************************
+* Copyright (C), Xingang.Li
+* Author:      Xingang.Li  Version: 1.0
+* Description:
+******************************************************************************/
 #include "klcko_impl.h"
 
 static int klcko_config_process(int cmd)

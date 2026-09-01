@@ -3,17 +3,12 @@
 * Author:      Xingang.Li  Version: 1.0
 * Description:
 ******************************************************************************/
-#ifndef _KLCKO_LOADER_H
-#define _KLCKO_LOADER_H
-#ifdef __cplusplus
-extern "C"
+#include "utl/ulc_user.h"
+
+SEC(".spf.cmd/main")
+int main()
 {
-#endif
-
-int KlcKoLoad_Init(void);
-void KlcKoLoad_Fini(void);
-
-#ifdef __cplusplus
+    printf("Hello world!! \n");
+    return 0;
 }
-#endif
-#endif 
+
