@@ -19,7 +19,6 @@ sudo ./loadklc.arm64.sh
 sudo ./samples/test_samples.x64.sh
 # arm64系统上: 
 sudo ./samples/test_samples.arm64.sh
-cd ..
 ```
 
 # 测试内核Lua
