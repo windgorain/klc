@@ -1,5 +1,6 @@
 # 说明
-KLC(Kernel Level Context)是一款Linux内核SPF运行时
+KLC(Kernel Level Context)是一款Linux内核SPF运行时.
+SPF文件是一种编译一次即可到处运行的文件格式, 其依赖于SPF运行时. KLC是基于Linux内核实现的SPF运行时, 只需要编译加载KLC, 即可在内核运行SPF文件.
 
 # 编译
 ./build.sh
