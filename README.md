@@ -4,7 +4,7 @@ KLC(Kernel Level Context)是一款Linux内核SPF运行时
 # 编译
 ./build.sh
 
-# 运行
+# 加载到内核
 ```
 cd bin
 # x64系统上: 
