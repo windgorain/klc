@@ -49,6 +49,21 @@ extern "C"
 #define PT_REGS_SP(x) ((x)->sp)
 #define PT_REGS_IP(x) ((x)->pc)
 
+#elif defined(__arm__)
+#define PT_REGS_PARM1(x) ((x)->uregs[0])  
+#define PT_REGS_PARM2(x) ((x)->uregs[1])  
+#define PT_REGS_PARM3(x) ((x)->uregs[2])  
+#define PT_REGS_PARM4(x) ((x)->uregs[3])  
+#define PT_REGS_RC(x)    ((x)->uregs[0])
+#define PT_REGS_SP(x) ((x)->uregs[13]) 
+
+static inline U64 PT_REGS_PARM5(struct pt_regs *ctx)
+{
+    
+    unsigned long sp = PT_REGS_SP(ctx);
+    return *(int*)((void*)sp + 4);
+}
+
 #elif defined(__powerpc__)
 
 #define PT_REGS_PARM1(x) ((x)->gpr[3])

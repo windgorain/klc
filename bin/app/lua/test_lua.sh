@@ -1,6 +1,6 @@
 #!/bin/sh
 
-KLCTOOL=./klctool/klctool-arm64
+KLCTOOL=./klctool
 
 ${KLCTOOL} load spf app/lua/lua5.1.spf -r
 ${KLCTOOL} run lua5.1 -v

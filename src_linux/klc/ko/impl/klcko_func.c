@@ -25,6 +25,11 @@
 #define KLCKO_OSBASE_BPF_PROG
 #endif
 
+int KlcKoFunc_NumPossibleCpus(void);
+int klc_init_nf_hook_ops(KLC_PARAM_S *p);
+U64 klc_map_prog_run(struct bpf_map *progmap, unsigned int index, void *ctx);
+void * klc_get_bpf_env_prog(void *env);
+
 #if 1 
 
 int KlcKoFunc_NumPossibleCpus(void)
@@ -32,34 +37,6 @@ int KlcKoFunc_NumPossibleCpus(void)
     return num_possible_cpus();
 }
 
-int KlcKoFunc_TimerInit(struct timer_list *timer, void *timeout_func)
-{
-    KO_SETUP_TIMER(timer, timeout_func, 0);
-    return 0;
-}
-
-int klc_add_timer(struct timer_list *timer, unsigned int ms)
-{
-    unsigned int t;
-
-    if (HZ < 1000) {
-        t = round_up(ms, 1000/HZ);
-        t = (t * HZ) / 1000;
-    } else {
-        t = (ms * HZ) / 1000;
-    }
-
-    timer->expires = jiffies + t;
-    add_timer(timer);
-
-    return 0;
-}
-
-int klc_del_timer(struct timer_list *timer)
-{
-    del_timer(timer);
-    return 0;
-}
 #endif
 
 int klc_init_nf_hook_ops(KLC_PARAM_S *p)
@@ -143,6 +120,7 @@ int klc_set_bpf_len(struct bpf_prog *prog, int len )
     return 0;
 }
 
+
 void * klc_set_bpf_func(struct bpf_prog *prog, void *f)
 {
     void *old = prog->bpf_func;
@@ -152,14 +130,18 @@ void * klc_set_bpf_func(struct bpf_prog *prog, void *f)
     return old;
 }
 
+
 int klc_get_bpf_len(struct bpf_prog *prog)
 {
 	return prog->len;
 }
+
+
 void * klc_get_bpf_insn(struct bpf_prog *prog)
 {
     return prog->insnsi;
 }
+
 int klc_get_hz(void)
 {
     return HZ;
@@ -368,6 +350,7 @@ int klc_get_pt_params(struct pt_regs *regs, OUT KLC_PT_PARAM_S *p)
     p->param[4] = PT_REGS_PARM5(regs);
     return 0;
 }
+
 void klcko_set_pt_rc(struct pt_regs *regs, long long rc)
 {
     PT_REGS_RC(regs) = rc;

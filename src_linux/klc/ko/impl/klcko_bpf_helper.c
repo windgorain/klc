@@ -363,7 +363,8 @@ static int ulc_add_timer(void *timer_node, U32 ms)
 
 static void ulc_del_timer(void *timer_node)
 {
-    del_timer(timer_node);
+    
+    timer_delete(timer_node);
 }
 
 static const void * g_bpf_base_helpers[BPF_BASE_HELPER_COUNT];
@@ -433,8 +434,11 @@ static const void * g_bpf_sys_helpers[BPF_SYS_HELPER_COUNT] = {
 
     [_(ULC_ID_ERRNO)] = _ulc_ret_n1,
     [_(ULC_ID_SET_ERRNO)] = _ulc_ret_0,
+
+#if defined(__aarch64__) || defined(__x86_64__)
     [_(ULC_ID_SETJMP)] = klcko_setjmp,
     [_(ULC_ID_LONGJMP)] = klcko_longjmp,
+#endif
 
     [_(ULC_ID_INIT_TIMER)] = ulc_init_timer,
     [_(ULC_ID_ADD_TIMER)] = ulc_add_timer,
