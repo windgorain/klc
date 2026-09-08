@@ -9,4 +9,4 @@ dmesg | grep "Lua"
 
 ${KLCTOOL} load spf app/lua/klua_test.o -r
 ${KLCTOOL} run klua_test
-dmesg | grep "klua"
+dmesg -T | grep "klua"

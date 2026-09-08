@@ -6,6 +6,8 @@
 #ifndef _ULC_USER_H
 #define _ULC_USER_H
 
+#define IN_ULC_USER
+
 #ifdef IN_ULC_USER
 
 #include <stdio.h>

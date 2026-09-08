@@ -2,6 +2,7 @@
 KLC(Kernel Level Context)是一款Linux内核SPF运行时.  
 SPF文件: 是一种和系统无关的通用文件格式,只要系统上存在运行时,即可运行. 可以运行在内核态、用户态、windows、Linux、MacOS、嵌入式、uboot等各种支持SPF运行时的环境。 
 只需要编译加载KLC, 即可在Linux内核运行SPF文件.  
+可以通过klcfunc实现自定义ebpf helper.  
 # 编译
 ./build.sh
 
@@ -13,17 +14,21 @@ sudo ./loadklc.sh
 
 # 测试示例
 ```
-sudo ./samples/test_samples.sh
+#运行lua测试
 sudo ./app/lua/test_lua.sh
+#运行hello world
+sudo ./samples/test_hello_world.sh
+#在XDP程序中调用自定义函数
+sudo ./samples/test_klcfunc.sh eth0
 ```
 
 # 应用代码示例
 ```
 # klc/samples 下存放了应用代码示例
 
-# 以hello_world为例
-cd klc/samples/hello_world
+# 以klcfunc自定义函数为例
+cd ../klc/samples/klcfunc
+# 可以修改klcfunc的实现, 定义自己的namefunc和idfunc
 ./build.sh
-# 会生成hello_world.o文件，这个文件可被加载到KLC环境执行
 ```
 
