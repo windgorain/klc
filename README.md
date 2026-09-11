@@ -27,8 +27,16 @@ sudo ./samples/test_klcfunc.sh eth0
 # klc/samples 下存放了应用代码示例
 
 # 以klcfunc自定义函数为例
-cd ../klc/samples/klcfunc
+cd klc/samples/klcfunc
 # 可以修改klcfunc的实现, 定义自己的namefunc和idfunc
 ./build.sh
+```
+
+# 常用应用
+## SNI Sniffer
+用于监控本机请求的SSL域名, 并将进程名/进程号/域名打印出来 
+```
+cd klc/bin
+sudo ./spf/kapp/sni_sniffer/load_sni_sniffer.sh
 ```
 
