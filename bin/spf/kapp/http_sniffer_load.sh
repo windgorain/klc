@@ -2,8 +2,8 @@
 
 KLCTOOL=./klctool
 
-#加载sni sniffer
-${KLCTOOL} load spf spf/kapp/sni_sniffer/sni_sniffer.spf -r
+#加载http sniffer
+${KLCTOOL} load spf spf/kapp/http_sniffer.o -r
 
 #开启trace
 sh -c 'echo 1 > /sys/kernel/debug/tracing/events/bpf_trace/bpf_trace_printk/enable'
@@ -12,7 +12,7 @@ sh -c 'echo 1 > /sys/kernel/debug/tracing/events/bpf_trace/bpf_trace_printk/enab
 quit_process() {
     echo ""
     echo "quit..."
-    ${KLCTOOL} unload instance sni_sniffer
+    ${KLCTOOL} unload instance http_sniffer
     exit
 }
 
