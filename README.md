@@ -15,8 +15,9 @@ cd -
 
 # 测试示例
 ```
-#运行lua测试
 cd bin
+
+#运行lua测试
 sudo ./app/lua/test_lua.sh
 
 #运行hello world
@@ -24,6 +25,7 @@ sudo ./samples/test_hello_world.sh
 
 #在XDP程序中调用自定义函数
 sudo ./samples/test_klcfunc.sh eth0
+
 cd -
 ```
 
