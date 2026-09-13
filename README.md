@@ -24,13 +24,13 @@ cd -
 ```
 # klc/samples 下存放了应用代码示例
 
-# 以klcfunc自定义函数为例
+# 自定义辅助函数
 cd samples/klcfunc
 # 可以修改klcfunc的实现, 定义自己的namefunc和idfunc
 ./build.sh
 cd -
 
-# 在XDP程序中使用LUA解析HTTP Host字段
+# 在XDP程序中使用LUA
 cd samples/luaxdp
 ./build.sh
 cd -
