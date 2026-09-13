@@ -23,7 +23,7 @@ void * _memcpy(void *dest, const void *src, size_t count);
 
 static inline int _spfmod_build_info(OUT MYBPF_IOCTL_S *d, void *data, int data_size)
 {
-    int len = MIN(d->out_data_size, data_size);
+    int len = MIN((int)d->out_data_size, data_size);
     _memcpy(d->out_data, data, len);
     return len;
 }
