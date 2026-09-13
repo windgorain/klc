@@ -20,22 +20,6 @@ sudo ./loadklc.sh
 cd -
 ```
 
-# 测试示例
-```
-cd bin
-
-#运行lua测试
-sudo ./app/lua/test_lua.sh
-
-#运行hello world
-sudo ./samples/test_hello_world.sh
-
-#在XDP程序中调用自定义函数
-sudo ./samples/test_klcfunc.sh eth0
-
-cd -
-```
-
 # 应用代码示例
 ```
 # klc/samples 下存放了应用代码示例
@@ -44,6 +28,32 @@ cd -
 cd samples/klcfunc
 # 可以修改klcfunc的实现, 定义自己的namefunc和idfunc
 ./build.sh
+cd -
+
+# 在XDP程序中使用LUA解析HTTP Host字段
+cd samples/luaxdp
+./build.sh
+cd -
+
+```
+
+# 测试
+```
+cd bin
+
+#运行LUA
+sudo ./app/lua/test_lua.sh
+
+#运行hello world
+sudo ./samples/test_hello_world.sh
+
+#在XDP程序中调用自定义函数
+sudo ./samples/test_klcfunc.sh eth0
+
+#在XDP程序中使用LUA
+sudo ./samples/test_luaxdp.sh eth0
+
+cd -
 ```
 
 # 常用应用
