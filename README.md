@@ -60,5 +60,5 @@ cd -
 | samples/klua | 在内核中打印LUA信息 |
 | samples/luaxdp | 在XDP程序中使用LUA |
 | spf/kapp/http_sniffer | 监控本机请求的HTTP域名, 并将进程名/进程号/域名打印出来 |
-| spf/drivers/snull | 简单的网络设备驱动示例 |
+| spf/drivers/snull | 简单的网络设备驱动 |
 
