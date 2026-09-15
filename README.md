@@ -20,29 +20,9 @@ sudo ./loadklc.sh
 cd -
 ```
 
-# 应用代码示例
-```
-# klc/samples 下存放了应用代码示例
-
-# 自定义辅助函数
-cd samples/klcfunc
-# 可以修改klcfunc的实现, 定义自己的namefunc和idfunc
-./build.sh
-cd -
-
-# 在XDP程序中使用LUA
-cd samples/luaxdp
-./build.sh
-cd -
-
-```
-
 # 测试
 ```
 cd bin
-
-#运行LUA
-sudo ./app/lua/test_lua.sh
 
 #运行hello world
 sudo ./samples/test_hello_world.sh
@@ -50,30 +30,35 @@ sudo ./samples/test_hello_world.sh
 #在XDP程序中调用自定义函数
 sudo ./samples/test_klcfunc.sh eth0
 
+#在内核中打印LUA信息
+sudo ./app/lua/test_lua.sh
+
 #在XDP程序中使用LUA
 sudo ./samples/test_luaxdp.sh eth0
 
-cd -
-```
-
-# 常用应用
-## HTTP Sniffer
-用于监控本机请求的HTTP域名, 并将进程名/进程号/域名打印出来 
-```
-cd spf/kapp/http_sniffer
-./build.sh
-cd -
-
-cd bin
+#监控本机请求的HTTP域名, 并将进程名/进程号/域名打印出来 
 sudo ./spf/kapp/http_sniffer_load.sh
+
+#监控本机请求的SSL域名, 并将进程名/进程号/域名打印出来 
+sudo ./spf/kapp/sni_sniffer_load.sh
+
+#驱动示例
+sudo ./klctool load spf drivers/snull.o
+sudo ./klctool load spf drivers/snull.o -i snull2
+ip link
+sudo ./klctool unload instance snull
+sudo ./klctool unload instance snull2
+
 cd -
 ```
 
-## SNI Sniffer
-用于监控本机请求的SSL域名, 并将进程名/进程号/域名打印出来 
-```
-cd bin
-sudo ./spf/kapp/sni_sniffer_load.sh
-cd -
-```
+# 示例程序说明
+| 名称 | 说明 |
+| --- | --- |
+| samples/hello_world| KLC Hello World 程序 |
+| samples/klcfunc | 使用EBPF扩展EBPF Helper功能 |
+| samples/klua | 在内核中打印LUA信息 |
+| samples/luaxdp | 在XDP程序中使用LUA |
+| spf/kapp/http_sniffer | 监控本机请求的HTTP域名, 并将进程名/进程号/域名打印出来 |
+| spf/drivers/snull | 简单的网络设备驱动示例 |
 

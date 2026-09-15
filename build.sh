@@ -36,3 +36,7 @@ cd spf/kapp/http_sniffer
 ./build.sh
 cd - > /dev/null
 
+cd spf/drivers/snull
+./build.sh
+cd - > /dev/null
+

@@ -1,0 +1,2 @@
+clang -O2 -I ../../../h -target bpf -c *.c
+cp *.o ../../../bin/drivers/snull.o
