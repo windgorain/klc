@@ -65,6 +65,14 @@ typedef struct {
     void *fault_handler;
 }KLC_KPROBE_PARAM_S;
 
+typedef struct {
+	int     (*ndo_init)(void *dev);
+	void    (*ndo_uninit)(void *dev);
+	int     (*ndo_open)(void *dev);
+	int     (*ndo_stop)(void *dev);
+	int     (*ndo_start_xmit)(void *skb, void *dev);
+}KLC_NET_DEV_OPS_S;
+
 #ifdef __cplusplus
 }
 #endif

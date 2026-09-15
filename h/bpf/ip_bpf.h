@@ -68,6 +68,19 @@ static inline void IPBPF_SwapIP(IP_HEAD_S *ip_hdr)
     ip_hdr->unSrcIp.uiIp = tmp;
 }
 
+
+static inline void * IPBPF_Payload(IP_HEAD_S *ip_hdr)
+{
+    return (void*)ip_hdr + IP_HEAD_LEN(ip_hdr);
+}
+
+
+static inline U16 IPBPF_PayloadLen(IP_HEAD_S *ip_hdr)
+{
+    U16 ip_len = ntohs(ip_hdr->usTotlelen);
+    return ip_len - IP_HEAD_LEN(ip_hdr);
+}
+
 #ifdef __cplusplus
 }
 #endif

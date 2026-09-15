@@ -15,7 +15,7 @@ static void (*pf_klc_get_pt_params)(void *regs, OUT void *p);
 static void* (*pf_skb_push)(void *skb, unsigned int len);
 static void* (*pf_skb_pull)(void *skb, unsigned int len);
 static void (*pf_compute_data_pointers)(void *skb, void *tc);
-static void (*pf_klcko_get_skb_info)(void *skb, OUT KLC_SKB_INFO_S *info);
+static void (*pf_klc_get_skb_info)(void *skb, OUT KLC_SKB_INFO_S *info);
 
 static inline void _http_sniffer_print(LSTR_S *str)
 {
@@ -68,9 +68,9 @@ static void _http_sniffer_ip_output(void *skb)
 {
     KLC_SKB_INFO_S skbinfo;
 
-    pf_klcko_get_skb_info(skb, &skbinfo);
+    pf_klc_get_skb_info(skb, &skbinfo);
     KLCHLP_SkbContinue(skb, skbinfo.len);
-    pf_klcko_get_skb_info(skb, &skbinfo);
+    pf_klc_get_skb_info(skb, &skbinfo);
 
     int data_len = skbinfo.head_len;
     void *data = (void*)(long)skbinfo.data;
@@ -133,11 +133,11 @@ static int _http_sniffer_event_init(void)
     pf_compute_data_pointers = ulc_sys_get_sym("klcko_compute_data_pointers");
     pf_skb_push = ulc_sys_get_sym("skb_push");
     pf_skb_pull = ulc_sys_get_sym("skb_pull");
-    pf_klcko_get_skb_info = ulc_sys_get_sym("klcko_get_skb_info");
+    pf_klc_get_skb_info = ulc_sys_get_sym("klc_get_skb_info");
 
     if ((! pf_klc_get_pt_params)
             || (! pf_compute_data_pointers)
-            || (! pf_klcko_get_skb_info)
+            || (! pf_klc_get_skb_info)
             || (! pf_skb_push)
             || (! pf_skb_pull)) {
         printf("SPF: http sniffer init error\n");

@@ -14,5 +14,25 @@ fi
 cd src_linux/klc/ko/
 make
 cp *.ko ../../../bin/
-cd ../../../
+cd - > /dev/null
+
+cd samples/hello_world/
+./build.sh
+cd - > /dev/null
+
+cd samples/klcfunc/
+./build.sh
+cd - > /dev/null
+
+cd samples/klua/
+./build.sh
+cd - > /dev/null
+
+cd samples/luaxdp/
+./build.sh
+cd - > /dev/null
+
+cd spf/kapp/http_sniffer
+./build.sh
+cd - > /dev/null
 

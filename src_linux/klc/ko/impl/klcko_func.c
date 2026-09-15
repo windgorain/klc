@@ -29,6 +29,7 @@ int KlcKoFunc_NumPossibleCpus(void);
 int klc_init_nf_hook_ops(KLC_PARAM_S *p);
 U64 klc_map_prog_run(struct bpf_map *progmap, unsigned int index, void *ctx);
 void * klc_get_bpf_env_prog(void *env);
+int klc_init_netdev(struct net_device *dev, char *name, KLC_NET_DEV_OPS_S *ops, OUT struct net_device_ops *netdev_ops);
 
 #if 1 
 
@@ -227,32 +228,32 @@ int klc_init_bpf_proto(struct bpf_func_proto *proto, void *func)
     return 0;
 }
 
-void klcko_skb_reserve(struct sk_buff *skb, int len)
+void klc_skb_reserve(struct sk_buff *skb, int len)
 {
     skb_reserve(skb, len);
 }
 
-void klcko_skb_reset_network_header(struct sk_buff *skb)
+void klc_skb_reset_network_header(struct sk_buff *skb)
 {
     skb_reset_network_header(skb);
 }
 
-void klcko_skb_reset_transport_header(struct sk_buff *skb)
+void klc_skb_reset_transport_header(struct sk_buff *skb)
 {
     skb_reset_transport_header(skb);
 }
 
-void klcko_skb_set_transport_header(struct sk_buff *skb, const int offset)
+void klc_skb_set_transport_header(struct sk_buff *skb, const int offset)
 {
     skb_set_transport_header(skb, offset);
 }
 
-int klcko_skb_headroom(struct sk_buff *skb)
+int klc_skb_headroom(struct sk_buff *skb)
 {
     return skb_headroom(skb);
 }
 
-void * klcko_create_skb(int data_len)
+void * klc_create_skb(int data_len)
 {
     struct sk_buff *skb;
     skb = alloc_skb(data_len + LL_MAX_HEADER, GFP_ATOMIC);
@@ -266,12 +267,12 @@ void * klcko_create_skb(int data_len)
     return skb;
 }
 
-void klcko_free_skb(void *skb)
+void klc_free_skb(void *skb)
 {
 	kfree_skb(skb);
 }
 
-void klcko_get_skb_struct_info(OUT KLC_SKB_STRUCT_INFO_S *info)
+void klc_get_skb_struct_info(OUT KLC_SKB_STRUCT_INFO_S *info)
 {
     info->struct_size = sizeof(struct sk_buff);
     info->cb_offset = offsetof(struct sk_buff, cb);
@@ -279,7 +280,7 @@ void klcko_get_skb_struct_info(OUT KLC_SKB_STRUCT_INFO_S *info)
     info->priority_offset  = offsetof(struct sk_buff, priority);
 }
 
-void klcko_get_skb_info(struct sk_buff *skb, OUT KLC_SKB_INFO_S *info)
+void klc_get_skb_info(struct sk_buff *skb, OUT KLC_SKB_INFO_S *info)
 {
     info->queue_mapping = skb->queue_mapping;
     info->protocol = skb->protocol;
@@ -303,7 +304,8 @@ void klcko_get_skb_info(struct sk_buff *skb, OUT KLC_SKB_INFO_S *info)
     info->end = (u64)(unsigned long)skb->end;
 }
 
-void klcko_compute_data_pointers(struct sk_buff *skb, MYBPF_TC_S *tc)
+
+void klc_compute_data_pointers(struct sk_buff *skb, MYBPF_TC_S *tc)
 {
     bpf_compute_data_pointers(skb);
     if (tc) {
@@ -313,17 +315,17 @@ void klcko_compute_data_pointers(struct sk_buff *skb, MYBPF_TC_S *tc)
     }
 }
 
-unsigned int klcko_xdp_ingress_ifindex(struct xdp_buff *x)
+unsigned int klc_xdp_ingress_ifindex(struct xdp_buff *x)
 {
     return x->rxq->dev->ifindex;
 }
 
-unsigned int klcko_xdp_rx_queue_index(struct xdp_buff *x)
+unsigned int klc_xdp_rx_queue_index(struct xdp_buff *x)
 {
     return x->rxq->queue_index;
 }
 
-long klcko_sprintf(char *str, U32 str_size, const char *fmt, U64 *d, U32 d_len)
+long klc_sprintf(char *str, U32 str_size, const char *fmt, U64 *d, U32 d_len)
 {
     switch (d_len) {
         case 0: return snprintf(str,str_size,"%s",fmt);
@@ -351,19 +353,43 @@ int klc_get_pt_params(struct pt_regs *regs, OUT KLC_PT_PARAM_S *p)
     return 0;
 }
 
-void klcko_set_pt_rc(struct pt_regs *regs, long long rc)
+void klc_set_pt_rc(struct pt_regs *regs, long long rc)
 {
     PT_REGS_RC(regs) = rc;
 }
 
-void * klcko_alloc_percpu_mem(int percpu_size, int align)
+void * klc_alloc_percpu_mem(int percpu_size, int align)
 {
     return __alloc_percpu_gfp(percpu_size, align, GFP_ATOMIC);
 }
 
-void klcko_free_percpu_mem(void *ptr)
+void klc_free_percpu_mem(void *ptr)
 {
     free_percpu(ptr);
+}
+
+int klc_init_netdev(struct net_device *dev, char *name, KLC_NET_DEV_OPS_S *ops, OUT struct net_device_ops *netdev_ops)
+{
+    
+    strscpy(dev->name, name, sizeof(dev->name));
+    netdev_ops->ndo_init = (void*)ops->ndo_init;
+    netdev_ops->ndo_uninit = (void*)ops->ndo_uninit;
+    netdev_ops->ndo_open = (void*)ops->ndo_open;
+    netdev_ops->ndo_stop = (void*)ops->ndo_stop;
+    netdev_ops->ndo_start_xmit = (void*)ops->ndo_start_xmit;
+    dev->netdev_ops = netdev_ops;
+
+    return 0;
+}
+
+void klc_netif_start_queue(void *dev)
+{
+    netif_start_queue(dev);
+}
+
+void klc_netif_stop_queue(void *dev)
+{
+    netif_stop_queue(dev);
 }
 
 int KlcKoFunc_Init(void)
