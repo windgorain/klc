@@ -1,4 +1,3 @@
-# 说明
 KLC (Kernel Level Context) is a Linux kernel SPF runtime.  
 SPF file: It's a universal file format that's system-independent. As long as the runtime exists on the system, it can run. It can work in kernel mode, user mode, Windows, Linux, MacOS, embedded systems, uboot, and any other environment that supports the SPF runtime.  
 You just need to compile and load KLC to run SPF files in the Linux kernel.  
