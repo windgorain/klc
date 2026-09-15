@@ -1,48 +1,48 @@
 # 说明
-KLC(Kernel Level Context)是一款Linux内核SPF运行时.  
-SPF文件: 是一种和系统无关的通用文件格式,只要系统上存在运行时,即可运行. 可以运行在内核态、用户态、windows、Linux、MacOS、嵌入式、uboot等各种支持SPF运行时的环境。 
-只需要编译加载KLC, 即可在Linux内核运行SPF文件.  
+KLC (Kernel Level Context) is a Linux kernel SPF runtime. 
+SPF file: It's a universal file format that's system-independent. As long as the runtime exists on the system, it can run. It can work in kernel mode, user mode, Windows, Linux, MacOS, embedded systems, uboot, and any other environment that supports the SPF runtime. 
+You just need to compile and load KLC to run SPF files in the Linux kernel. 
 
-# 特点
-1. 可以通过klcfunc实现自定义ebpf helper, 方便扩展ebpf功能. 
-2. APP只需要编译一次, 即可在各种不同版本内核上运行, 无需再次编译(Run Anywhere). 
-3. APP无需发布源代码, 只需要发布编译后的文件, 用户无需编译即可加载使用APP. 
-4. 一个APP可以加载为多个实例, 也可同时加载多个APP的不同版本, 方便不断流升级.  
-5. 兼容性良好, 部分APP即可在用户态运行, 又可在内核态运行, 方便调试稳定后下发到内核.
+# Features
+1. You can use klcfunc to implement custom eBPF helpers, making it easy to extend eBPF functionality. 
+2. The app only needs to be compiled once and can run on various kernel versions without compiling again (Run Anywhere). 
+3. The app doesn't need to release source code—just the compiled files are enough, and users can load and use the app without compiling. 
+4. One app can be loaded as multiple instances, and different versions of multiple apps can be loaded simultaneously, making seamless upgrades easy. 
+5. Good compatibility: some apps can run in user space or kernel space, which is convenient for debugging before rolling out to the kernel. 
 
-# 编译
+# Compile
 ./build.sh
 
-# 加载环境到内核
+# Load
 ```
 cd bin
 sudo ./loadklc.sh
 cd -
 ```
 
-# 测试
+# Test
 ```
 cd bin
 
-#运行hello world
+#hello world
 sudo ./samples/test_hello_world.sh
 
-#在XDP程序中调用自定义函数
+#Calling a custom function in an XDP program
 sudo ./samples/test_klcfunc.sh eth0
 
-#在内核中打印LUA信息
+#Print LUA information in the kernel
 sudo ./app/lua/test_lua.sh
 
-#在XDP程序中使用LUA
+#Using LUA in XDP programs
 sudo ./samples/test_luaxdp.sh eth0
 
-#监控本机请求的HTTP域名, 并将进程名/进程号/域名打印出来 
+# Monitor HTTP domain requests on this machine, and print out the process name/PID/domain
 sudo ./spf/kapp/http_sniffer_load.sh
 
-#监控本机请求的SSL域名, 并将进程名/进程号/域名打印出来 
+#Monitor SSL domains requested by the local machine, and print out the process name/PID/domain
 sudo ./spf/kapp/sni_sniffer_load.sh
 
-#驱动示例
+#Driver Example
 sudo ./klctool load spf drivers/snull.o
 sudo ./klctool load spf drivers/snull.o -i snull2
 ip link
@@ -52,13 +52,13 @@ sudo ./klctool unload instance snull2
 cd -
 ```
 
-# 示例程序说明
-| 名称 | 说明 |
+# Example Program Description
+| Name | Description |
 | --- | --- |
-| samples/hello_world| KLC Hello World 程序 |
-| samples/klcfunc | 使用EBPF扩展EBPF Helper功能 |
-| samples/klua | 在内核中打印LUA信息 |
-| samples/luaxdp | 在XDP程序中使用LUA |
-| spf/kapp/http_sniffer | 监控本机请求的HTTP域名, 并将进程名/进程号/域名打印出来 |
-| spf/drivers/snull | 简单的网络设备驱动 |
+| samples/hello_world | KLC Hello World Program |
+| samples/klcfunc | Use EBPF to extend EBPF Helper functions |
+| samples/klua | Print LUA info in the kernel |
+| samples/luaxdp | Use LUA in XDP programs |
+| spf/kapp/http_sniffer | Monitor HTTP domains requested by the local machine, and print the process name/ID/domain |
+| spf/drivers/snull | Simple network device driver |
 
