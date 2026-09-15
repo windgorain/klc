@@ -11,6 +11,7 @@ extern "C" {
 #endif
 
 void * KLCKO_GetKV(U32 id);
+U64 KLCKO_GetKV64(U32 id);
 int KlcKoKv_Init(void);
 void KlcKoKv_Fini(void);
 

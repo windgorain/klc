@@ -2,7 +2,7 @@ KLC_DIR = $(PWD)/..
 
 BASE_DIR = $(KLC_DIR)/../..
 
-ccflags-y := -I$(BASE_DIR)/h -I$(KLC_DIR)/h -I$(KLC_DIR)/ko -O2
+ccflags-y := -I$(BASE_DIR)/h -I$(KLC_DIR)/h -I$(KLC_DIR)/ko -O2 -Wno-missing-prototypes -Wno-missing-declarations
 
 obj-m := klc_impl.o klc_base.o klc_oscomp.o
 

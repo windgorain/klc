@@ -14,6 +14,7 @@
 #include "utl/arch_utl.h"
 #include "klcko_bpf_helper.h"
 #include "klcko_bare.h"
+#include "klcko_loader.h"
 
 static MYBPF_BARE_S g_klcko_bare;
 static MYBPF_SPF_S *g_mybpf_spf_ctrl = NULL;

@@ -7,6 +7,7 @@
 #include "ko/ko_errcode.h"
 #include "klc/klc_kv_def.h"
 #include "klc/klc_nl_def.h"
+#include "klcko_kv.h"
 
 static U64 g_klcko_kv[KLC_KV_MAX];
 
@@ -21,13 +22,18 @@ static int _klcko_set_kv(U32 id, U64 value)
     return 0;
 }
 
-U64 KLCKO_GetKV(U32 id)
+U64 KLCKO_GetKV64(U32 id)
 {
     if (id >= KLC_KV_MAX) {
         return 0;
     }
 
     return g_klcko_kv[id];
+}
+
+void * KLCKO_GetKV(U32 id)
+{
+    return (void*)(long)KLCKO_GetKV64(id);
 }
 
 static int _klcko_kv_set(KLC_KV_SET_NL_S *d)
