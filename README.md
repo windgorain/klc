@@ -10,7 +10,10 @@ You just need to compile and load KLC to run SPF files in the Linux kernel.
 5. Good compatibility: some apps can run in user space or kernel space, which is convenient for debugging before rolling out to the kernel. 
 
 # Compile
-./build.sh
+```
+./build_ko.sh   #compile kernel ko module
+./build_app.sh  #compile apps
+```
 
 # Load
 ```

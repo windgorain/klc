@@ -30,6 +30,7 @@ static void * (*ulc_sys_module_alloc)(int size) = (void *)ULC_ID_MODULE_ALLOC;
 static void * (*ulc_sys_module_free)(void *m) = (void *)ULC_ID_MODULE_FREE;
 static unsigned long (*ulc_sys_copy_from_user)(void *to, void *from, unsigned long len) = (void*)ULC_ID_COPY_FROM_USER;
 static unsigned long (*ulc_sys_copy_to_user)(void *to, void *from, unsigned long len) = (void*)ULC_ID_COPY_TO_USER;
+static int (*ulc_sys_ptr_size)(void) = (void*)ULC_ID_PTR_SIZE;
 
 static int (*ulc_sys_printf)(char *fmt, ...) = (void*)ULC_ID_PRINTF;
 static int (*ulc_sys_printfx)(char *fmt, U64 *d, int count) = (void*)ULC_ID_PRINTFX;
@@ -124,10 +125,14 @@ static const void ** (*ulc_get_sys_helpers)(void) = (void*)ULC_ID_GET_SYS_HELPER
 static const void ** (*ulc_get_user_helpers)(void) = (void*)ULC_ID_GET_USER_HELPER;
 static char * (*ulc_sys_env_name)(void) = (void*)ULC_ID_ENV_NAME;
 
+
+
+
 static void * (*ulc_map_lookup_elem)(void *map, void *key) = (void*)ULC_ID_MAP_LOOKUP_ELEM;
 static long (*ulc_map_update_elem)(void *map, void *key, void *value, U32 flag) = (void*)ULC_ID_MAP_UPDATE_ELEM;
 static long (*ulc_map_delete_elem)(void *map, void *key) = (void*)ULC_ID_MAP_DELETE_ELEM;
 static void * (*ulc_map_get_next_key)(void *map, void *curr_key, void *next_key) = (void*)ULC_ID_MAP_GET_NEXT_KEY;
+
 
 static void * (*ulc_raw_map_lookup_elem)(void *map, void *key) = (void*)ULC_ID_RAW_MAP_LOOKUP_ELEM;
 static long (*ulc_raw_map_update_elem)(void *map, void *key, void *value, U32 flag) = (void*)ULC_ID_RAW_MAP_UPDATE_ELEM;

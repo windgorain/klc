@@ -59,10 +59,12 @@ typedef struct {
 }KLC_PT_PARAM_S;
 
 typedef struct {
-    void *name;
-    void *pre_handler;
-    void *post_handler;
-    void *fault_handler;
+    void *kp __attribute__((aligned(8)));
+    int kp_size __attribute__((aligned(8)));
+    void *name __attribute__((aligned(8)));
+    void *pre_handler __attribute__((aligned(8)));
+    void *post_handler __attribute__((aligned(8)));
+    void *fault_handler __attribute__((aligned(8)));
 }KLC_KPROBE_PARAM_S;
 
 typedef struct {

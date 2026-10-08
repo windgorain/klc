@@ -53,12 +53,15 @@ static int _klcko_loader_load_spf(KLC_LOAD_SPF_NL_S *d)
 
     m.data = d->data;
     m.len = d->data_len;
+
     p.m = &m;
     p.instance = d->instance;
     p.filename = d->filename;
     p.flag = d->flag;
+    p.maps_fds = d->maps_fd;
+    p.map_count = d->map_count;
 
-    if (g_mybpf_spf_ctrl->load_instance(&p, d->maps_fd, d->map_count) < 0) {
+    if (g_mybpf_spf_ctrl->load_instance(&p) < 0) {
         KO_Print("Load spf failed \n");
         return KO_ERR_FAIL;
     }
@@ -90,8 +93,9 @@ static void _klcko_loader_unload_all_instance(void)
     g_mybpf_spf_ctrl->unload_all_instance();
 }
 
-static int _klcko_spf_do_cmd(int argc, char **argv, OUT void *reply, int reply_size)
+static int _klcko_spf_do_cmd(int argc, U64 *argv, OUT void *reply, int reply_size)
 {
+    MYBPF_PROG_RUN_S r = {0};
     MYBPF_PARAM_S p = {0};
 
     if (! g_mybpf_spf_ctrl) {
@@ -104,12 +108,15 @@ static int _klcko_spf_do_cmd(int argc, char **argv, OUT void *reply, int reply_s
     p.p[2] = (long)reply;
     p.p[3] = reply_size;
 
-    return g_mybpf_spf_ctrl->run_hookpoint(MYBPF_HP_TCMD, &p);
+    r.type = MYBPF_HP_TCMD;
+    r.param = &p;
+
+    return g_mybpf_spf_ctrl->run_hookpoint(&r);
 }
 
 static int _klcko_loader_run_cmd(KLC_SPF_CMD_NL_S *d, OUT char *reply, int reply_size, OUT int *reply_len)
 {
-    char *argv[KLC_SPF_CMD_ARGC_MAX + 1];
+    U64 argv64[KLC_SPF_CMD_ARGC_MAX + 1];
     int i, ret;
 
     if (d->argc > KLC_SPF_CMD_ARGC_MAX) {
@@ -123,16 +130,16 @@ static int _klcko_loader_run_cmd(KLC_SPF_CMD_NL_S *d, OUT char *reply, int reply
     }
 
     for (i=0; i<d->argc; i++) {
-        argv[i] = d->argv[i];
+        argv64[i] = (LONG)d->argv[i];
     }
 
-    argv[d->argc] = NULL;
+    argv64[d->argc] = 0;
 
-    if (reply > 0) {
+    if (reply_size > 0) {
         reply[0] = '\0';
     }
 
-    ret = _klcko_spf_do_cmd(d->argc, argv, reply, reply_size);
+    ret = _klcko_spf_do_cmd(d->argc, argv64, reply, reply_size);
 
     if (reply) {
         *reply_len = strlen(reply);
@@ -167,6 +174,7 @@ static int _klcko_loader_ioctl(KLC_LOADER_IOCTL_S *d, OUT void *reply, int reply
 static int _klcko_module_ioctl(KLC_MODULE_IOCTL_S *d, OUT void *reply, int reply_size, OUT int *reply_len)
 {
     MYBPF_IOCTL_S io = {0};
+    MYBPF_PROG_IOCTL_S io_d = {0};
     int len;
 
     if (! g_mybpf_spf_ctrl) {
@@ -179,7 +187,11 @@ static int _klcko_module_ioctl(KLC_MODULE_IOCTL_S *d, OUT void *reply, int reply
     io.in_data_len = d->in_data_len;
     io.out_data_size = reply_size;
 
-    len = g_mybpf_spf_ctrl->module_ioctl(d->instance, d->cmd, &io);
+    io_d.instance = d->instance;
+    io_d.cmd = d->cmd;
+    io_d.ioctl = &io;
+
+    len = g_mybpf_spf_ctrl->module_ioctl(&io_d);
     if (len > 0) {
         *reply_len = len;
     }

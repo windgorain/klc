@@ -23,6 +23,7 @@ enum {
     KLC_KV_FIND_VM_AREA,
     KLC_KV_JIT_ALLOC,
     KLC_KV_JIT_FREE,
+    KLC_KV_EXECMEM_ALLOC,
 
     KLC_KV_MAX = 1024
 };

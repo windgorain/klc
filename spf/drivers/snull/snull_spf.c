@@ -8,7 +8,7 @@
 #include "bpf/tcp_bpf.h"
 #include "spf/spf_string.h"
 #include "spf/core/spf_module.h"
-#include "spf/klc/klc_skb.h"
+#include "spf/klc/klc_sym.h"
 #include "spf/klc/klc_driver.h"
 
 static void * _g_self = NULL;
@@ -36,7 +36,16 @@ static int _snull_xmit(void *skb, void *dev)
 }
 
 
-static const KLC_NET_DEV_OPS_S g_snull_netdev_ops = {
+static int _snull_xmit32(U64 p1)
+{
+    void * skb = (void*)(p1 & 0xffffffff);
+    void *dev = (void*)(p1 >> 32);
+
+    return _snull_xmit(skb, dev);
+}
+
+
+static KLC_NET_DEV_OPS_S g_snull_netdev_ops = {
     .ndo_open       = _snull_open,
     .ndo_stop       = _snull_stop,
     .ndo_start_xmit = _snull_xmit,
@@ -48,6 +57,10 @@ static unsigned char g_snull_netdev_opsbuf[1024];
 static int _snull_init(void)
 {
     int ret;
+
+    if (ulc_sys_ptr_size() == 4) {
+        g_snull_netdev_ops.ndo_start_xmit = (void*)_snull_xmit32;
+    }
 
     
     g_snull_netdev = alloc_etherdev_mqs(0, 1, 1);

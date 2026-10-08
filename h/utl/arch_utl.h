@@ -14,6 +14,7 @@ enum {
     ARCH_TYPE_NONE = 0,
     ARCH_TYPE_ARM64,
     ARCH_TYPE_X86_64,
+    ARCH_TYPE_ARM32,
 
     ARCH_TYPE_MAX
 };
@@ -33,6 +34,10 @@ static inline int ARCH_LocalArch(void)
 
 #ifdef __x86_64__
     return ARCH_TYPE_X86_64;
+#endif
+
+#ifdef __arm__
+    return ARCH_TYPE_ARM32;
 #endif
 
     return ARCH_TYPE_NONE;

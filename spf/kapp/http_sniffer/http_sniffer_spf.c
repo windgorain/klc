@@ -7,15 +7,10 @@
 #include "spf/spf_string.h"
 #include "spf/core/spf_module.h"
 #include "spf/klc/klc_help.h"
+#include "spf/klc/klc_sym.h"
 
 static char g_http_sniffer_event_kp_in[256];
 static int g_http_sniffer_event_kp_ok = 0;
-
-static void (*pf_klc_get_pt_params)(void *regs, OUT void *p);
-static void* (*pf_skb_push)(void *skb, unsigned int len);
-static void* (*pf_skb_pull)(void *skb, unsigned int len);
-static void (*pf_compute_data_pointers)(void *skb, void *tc);
-static void (*pf_klc_get_skb_info)(void *skb, OUT KLC_SKB_INFO_S *info);
 
 static inline void _http_sniffer_print(LSTR_S *str)
 {
@@ -59,7 +54,9 @@ static void _http_sniffer_process(TCP_HEAD_S *tcp_hdr, void *data_end)
     void *payload = (void*)tcp_hdr + TCP_HEAD_LEN(tcp_hdr);
 
     int ret = _http_sniffer_get_host(payload, data_end, &host);
-    if (ret < 0) { return; }
+    if (ret < 0) { 
+        return;
+    }
 
     _http_sniffer_print(&host);
 }
@@ -68,9 +65,15 @@ static void _http_sniffer_ip_output(void *skb)
 {
     KLC_SKB_INFO_S skbinfo;
 
-    pf_klc_get_skb_info(skb, &skbinfo);
-    KLCHLP_SkbContinue(skb, skbinfo.len);
-    pf_klc_get_skb_info(skb, &skbinfo);
+    if (klc_get_skb_info(skb, &skbinfo) < 0) {
+        return;
+    }
+
+    pskb_may_pull(skb, skbinfo.len);
+
+    if (klc_get_skb_info(skb, &skbinfo) < 0) {
+        return;
+    }
 
     int data_len = skbinfo.head_len;
     void *data = (void*)(long)skbinfo.data;
@@ -86,7 +89,9 @@ static int _http_sniffer_event_handler_in_pre(void *p, void *regs)
 {
     KLC_PT_PARAM_S param = {0};
 
-    pf_klc_get_pt_params(regs, &param);
+    if (klc_get_pt_params(p, regs, &param) < 0) {
+        return 0;
+    }
 
     void *skb = (void*)(long)param.param[2];
     if (! skb) {
@@ -106,19 +111,21 @@ static int _http_sniffer_event_init_probe(void)
 {
     KLC_KPROBE_PARAM_S p = {0};
 
+    p.kp = g_http_sniffer_event_kp_in;
+    p.kp_size = sizeof(g_http_sniffer_event_kp_in);
     p.name = "ip_output";
     p.pre_handler = _http_sniffer_event_handler_in_pre;
     p.post_handler = _http_sniffer_event_handler_post;
 
-    int ret = ulc_call_sym(-1, klc_init_kprobe, g_http_sniffer_event_kp_in, sizeof(g_http_sniffer_event_kp_in), &p);
+    int ret = klc_init_kprobe(&p);
     if (ret < 0) {
-        printf("SPF: http sniffer init error: init failed, ret=%d\n", ret);
+        printf("SPF/http-sniffer: kprobe init failed, ret=%d\n", ret);
         return ret;
     }
 
-    ret = ulc_call_sym(-1, register_kprobe, g_http_sniffer_event_kp_in);
+    ret = register_kprobe(g_http_sniffer_event_kp_in);
     if (ret < 0) {
-        printf("SPF: http sniffer init error: init failed, ret=%d\n", ret);
+        printf("SPF/http-sniffer: register kprobe failed, ret=%d\n", ret);
         return ret;
     }
 
@@ -129,21 +136,6 @@ static int _http_sniffer_event_init_probe(void)
 
 static int _http_sniffer_event_init(void)
 {
-    pf_klc_get_pt_params = ulc_sys_get_sym("klc_get_pt_params");
-    pf_compute_data_pointers = ulc_sys_get_sym("klcko_compute_data_pointers");
-    pf_skb_push = ulc_sys_get_sym("skb_push");
-    pf_skb_pull = ulc_sys_get_sym("skb_pull");
-    pf_klc_get_skb_info = ulc_sys_get_sym("klc_get_skb_info");
-
-    if ((! pf_klc_get_pt_params)
-            || (! pf_compute_data_pointers)
-            || (! pf_klc_get_skb_info)
-            || (! pf_skb_push)
-            || (! pf_skb_pull)) {
-        printf("SPF: http sniffer init error\n");
-        return -1;
-    }
-
     return _http_sniffer_event_init_probe();
 }
 
@@ -151,7 +143,7 @@ static int _http_sniffer_event_fini1(void)
 {
     if (g_http_sniffer_event_kp_ok) {
         g_http_sniffer_event_kp_ok = 0;
-        ulc_call_sym(0, unregister_kprobe, g_http_sniffer_event_kp_in);
+        unregister_kprobe(g_http_sniffer_event_kp_in);
     }
 
     return 0;

@@ -14,9 +14,9 @@ extern "C"
 #endif
 
 typedef struct {
-    IN void *in_data;   
-    OUT void *out_data; 
-    IN U32 in_data_len; 
+    IN void *in_data __attribute__((aligned(8)));   
+    OUT void *out_data __attribute__((aligned(8))); 
+    IN U32 in_data_len __attribute__((aligned(8))); 
     IN U32 out_data_size; 
 }MYBPF_IOCTL_S;
 

@@ -96,11 +96,16 @@ static int _mybpf_bare_check(MYBPF_BARE_HDR_S *hdr, int mem_len, const void **tm
 static void * _mybpf_bare_alloc(int size)
 {
     void * (*jit_alloc)(int)= KLCKO_GetKV(KLC_KV_JIT_ALLOC);
-    if (! jit_alloc) {
-        return NULL;
+    if (jit_alloc) {
+        return jit_alloc(size);
     }
 
-    return jit_alloc(size);
+    void * (*execm_alloc)(int, int)= KLCKO_GetKV(KLC_KV_EXECMEM_ALLOC);
+    if (execm_alloc) {
+        return execm_alloc(3, size);
+    }
+
+    return NULL;
 }
 
 static void _mybpf_bare_free(void *mem)
@@ -208,8 +213,8 @@ static int _mybpf_bare_load(void *data, int len, const void **tmp_helpers, OUT M
 
 static U64 _mybpf_bare_call(MYBPF_BARE_S *bare, void *func, MYBPF_PARAM_S *p)
 {
-    U64 (*fn)(U64, U64, U64, U64, U64, void*) = func;
-    p->bpf_ret = fn(p->p[0], p->p[1], p->p[2], p->p[3], p->p[4], &bare->ctx);
+    U64 (*fn)(U64, U64, U64, U64, U64, U64) = func;
+    p->bpf_ret = fn(p->p[0], p->p[1], p->p[2], p->p[3], p->p[4], (U64)(LONG)&bare->ctx);
     return p->bpf_ret;
 }
 

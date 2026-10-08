@@ -56,7 +56,7 @@ u64 bpf_map_update_ele(u64 cmd, u64 p2, u64 p3, u64 p4, u64 p5)
     return _klc_base_call(cmd, p2, p3, p4, p5);
 }
 
-int KlcKo_SetBaseFunc(U32 index, void *func)
+int KlcKo_SetBaseFunc(U64 index, void *func)
 {
     if (index >= ARRAY_SIZE(g_klc_base_funcs)) {
         return -1;

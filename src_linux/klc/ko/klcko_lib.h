@@ -57,7 +57,7 @@ int KlcKoConfig_Init(void);
 void KlcKoConfig_Fini(void);
 
 #define KLCKO_BASE_FUNC_NUM 256
-int KlcKo_SetBaseFunc(U32 index, void *func);
+int KlcKo_SetBaseFunc(U64 index, void *func);
 void KlcKo_BaseEnable(int enable);
 void klc_base_module_use(int inc);
 

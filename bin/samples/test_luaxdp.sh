@@ -19,7 +19,7 @@ quit_process() {
 
 trap quit_process INT
 
-echo "Please visit this computer by http. eg: curl http://target"
+echo "Please visit this computer by http. eg: curl --ipv4 http://target"
 echo "Press Ctrl+C to quit"
 
 cat /sys/kernel/debug/tracing/trace_pipe

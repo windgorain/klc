@@ -47,8 +47,12 @@ int klc_init_nf_hook_ops(KLC_PARAM_S *p)
     return 0;
 }
 
-U64 klc_map_prog_run(struct bpf_map *progmap, unsigned int index, void *ctx)
+U64 klc_map_prog_run(U64 p1, U64 p2, U64 p3)
 {
+    struct bpf_map *progmap = (void*)(LONG)p1;
+    unsigned int index = p2;
+    void *ctx = (void*)(LONG)p3;
+
     struct bpf_array *array = container_of(progmap, struct bpf_array, map);
     struct bpf_prog *prog;
 
@@ -109,15 +113,21 @@ void * klc_get_bpf_env_ops(void *env)
 #endif
 }
 
-int klc_set_bpf_len(struct bpf_prog *prog, int len )
+int klc_set_bpf_len(U64 p1, U64 p2)
 {
+    struct bpf_prog *prog = (void*)(LONG)p1;
+    int len = p2; 
+
 	prog->len = len;
     return 0;
 }
 
 
-void * klc_set_bpf_func(struct bpf_prog *prog, void *f)
+void * klc_set_bpf_func(U64 p1, U64 p2)
 {
+    struct bpf_prog *prog = (void*)(LONG)p1;
+    void *f = (void*)(LONG)p2;
+
     void *old = prog->bpf_func;
     if (f) {
         prog->bpf_func = f;
@@ -174,9 +184,11 @@ int klc_get_bpf_proto_size(void)
     return sizeof(struct bpf_func_proto);
 }
 
-int klc_init_kprobe(struct kprobe *kp, int kp_size, KLC_KPROBE_PARAM_S *p)
+int klc_init_kprobe(KLC_KPROBE_PARAM_S *p)
 {
-    if (kp_size < sizeof(*kp)) {
+    struct kprobe *kp = p->kp;
+
+    if (p->kp_size < sizeof(*kp)) {
         return -1;
     }
 
@@ -194,9 +206,10 @@ void * klc_get_bpf_proto_func(struct bpf_verifier_ops *proto)
     return proto->get_func_proto;
 }
 
-int klc_set_bpf_proto_func(struct bpf_verifier_ops *proto, void *f)
+int klc_set_bpf_proto_func(U64 p1, U64 p2)
 {
-    proto->get_func_proto = f;
+    struct bpf_verifier_ops *proto = (void*)(long)p1;
+    proto->get_func_proto = (void*)(long)p2;
     return 0;
 }
 
@@ -205,8 +218,11 @@ int klc_get_bpf_verifier_ops_size(void)
     return sizeof(struct bpf_verifier_ops);
 }
 
-int klc_init_bpf_proto(struct bpf_func_proto *proto, void *func)
+int klc_init_bpf_proto(U64 p1, U64 p2)
 {
+    struct bpf_func_proto *proto = (void*)(LONG)p1;
+    void *func = (void*)(LONG)p2;
+
     if (proto->func) {
         return 0;
     }
@@ -222,9 +238,22 @@ int klc_init_bpf_proto(struct bpf_func_proto *proto, void *func)
     return 0;
 }
 
-void klc_skb_reserve(struct sk_buff *skb, int len)
+void klc_skb_reserve(U64 p1, U64 p2)
 {
+    struct sk_buff *skb = (void*)(LONG)p1;
+    int len = p2;
+
     skb_reserve(skb, len);
+}
+
+bool klc_pskb_may_pull(U64 p1, U64 p2)
+{
+    return pskb_may_pull((void*)(long)p1, p2);
+}
+
+void * klc_skb_put(U64 p1, U64 p2)
+{
+    return skb_put((void*)(long)p1, p2);
 }
 
 void klc_skb_reset_network_header(struct sk_buff *skb)
@@ -237,8 +266,11 @@ void klc_skb_reset_transport_header(struct sk_buff *skb)
     skb_reset_transport_header(skb);
 }
 
-void klc_skb_set_transport_header(struct sk_buff *skb, const int offset)
+void klc_skb_set_transport_header(U64 p1, U64 p2)
 {
+    struct sk_buff *skb = (void*)(LONG)p1;
+    const int offset = p2;
+
     skb_set_transport_header(skb, offset);
 }
 
@@ -274,8 +306,11 @@ void klc_get_skb_struct_info(OUT KLC_SKB_STRUCT_INFO_S *info)
     info->priority_offset  = offsetof(struct sk_buff, priority);
 }
 
-void klc_get_skb_info(struct sk_buff *skb, OUT KLC_SKB_INFO_S *info)
+int klc_get_skb_info(U64 p1, U64 p2)
 {
+    struct sk_buff *skb = (void*)(LONG)p1;
+    OUT KLC_SKB_INFO_S *info = (void*)(LONG)p2;
+
     info->queue_mapping = skb->queue_mapping;
     info->protocol = skb->protocol;
     info->tc_index = skb->tc_index;
@@ -296,11 +331,16 @@ void klc_get_skb_info(struct sk_buff *skb, OUT KLC_SKB_INFO_S *info)
     info->data = (u64)(unsigned long)skb->data;
     info->head = (u64)(unsigned long)skb->head;
     info->end = (u64)(unsigned long)skb->end;
+
+    return 0;
 }
 
 
-void klc_compute_data_pointers(struct sk_buff *skb, MYBPF_TC_S *tc)
+void klc_compute_data_pointers(U64 p1, U64 p2)
 {
+    struct sk_buff *skb = (void*)(LONG)p1;
+    MYBPF_TC_S *tc = (void*)(LONG)p2;
+
     bpf_compute_data_pointers(skb);
     if (tc) {
         tc->data = skb->data;
@@ -319,8 +359,14 @@ unsigned int klc_xdp_rx_queue_index(struct xdp_buff *x)
     return x->rxq->queue_index;
 }
 
-long klc_sprintf(char *str, U32 str_size, const char *fmt, U64 *d, U32 d_len)
+long klc_sprintf(U64 p1, U64 p2, U64 p3, U64 p4, U64 p5)
 {
+    char *str = (void*)(LONG)p1;
+    U32 str_size = p2;
+    const char *fmt = (void*)(LONG)p3;
+    U64 *d = (void*)(LONG)p4;
+    U32 d_len = p5;
+
     switch (d_len) {
         case 0: return snprintf(str,str_size,"%s",fmt);
         case 8: return snprintf(str,str_size,fmt,d[0]);
@@ -337,8 +383,11 @@ long klc_sprintf(char *str, U32 str_size, const char *fmt, U64 *d, U32 d_len)
     }
 }
 
-int klc_get_pt_params(struct pt_regs *regs, OUT KLC_PT_PARAM_S *p)
+int klc_get_pt_params(U64 p1, U64 p2)
 {
+    struct pt_regs *regs = (void*)(LONG)p1;
+    KLC_PT_PARAM_S *p = (void*)(LONG)p2;
+
     p->param[0] = PT_REGS_PARM1(regs);
     p->param[1] = PT_REGS_PARM2(regs);
     p->param[2] = PT_REGS_PARM3(regs);
@@ -347,13 +396,17 @@ int klc_get_pt_params(struct pt_regs *regs, OUT KLC_PT_PARAM_S *p)
     return 0;
 }
 
-void klc_set_pt_rc(struct pt_regs *regs, long long rc)
+void klc_set_pt_rc(U64 p1, U64 p2)
 {
-    PT_REGS_RC(regs) = rc;
+    struct pt_regs *regs = (void*)(LONG)p1;
+    PT_REGS_RC(regs) = p2;
 }
 
-void * klc_alloc_percpu_mem(int percpu_size, int align)
+void * klc_alloc_percpu_mem(U64 p1, U64 p2)
 {
+    int percpu_size = p1;
+    int align = p2;
+
     return __alloc_percpu_gfp(percpu_size, align, GFP_ATOMIC);
 }
 
@@ -362,8 +415,13 @@ void klc_free_percpu_mem(void *ptr)
     free_percpu(ptr);
 }
 
-int klc_init_netdev(struct net_device *dev, char *name, KLC_NET_DEV_OPS_S *ops, OUT struct net_device_ops *netdev_ops)
+int klc_init_netdev(U64 p1, U64 p2, U64 p3, U64 p4)
 {
+    struct net_device *dev = (void*)(LONG)p1;
+    char *name = (void*)(LONG)p2;
+    KLC_NET_DEV_OPS_S *ops = (void*)(LONG)p3;
+    OUT struct net_device_ops *netdev_ops = (void*)(LONG)p4;
+
     
     strscpy(dev->name, name, sizeof(dev->name));
     netdev_ops->ndo_init = (void*)ops->ndo_init;

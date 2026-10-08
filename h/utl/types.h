@@ -156,7 +156,7 @@ typedef struct {
 
 typedef struct {
     UCHAR *data; 
-    UINT64 len;   
+    U64 len;   
 }LLDATA_S;
 
 typedef LLDATA_S FILE_MEM_S;

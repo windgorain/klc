@@ -90,3 +90,32 @@ asm (
 );
 #endif
 
+#ifdef __arm__
+asm (
+"	.text\n"
+"	.balign 4\n"
+"	.globl klcko_setjmp\n"
+"	.type klcko_setjmp, #function\n"
+"klcko_setjmp:"
+"	stmia	r0, {r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}\n"
+"	mov	r0, #0\n"
+"	mov	r1, #0\n"
+"	bx lr\n"
+"	.size klcko_setjmp,.-klcko_setjmp\n"
+);
+
+asm(
+"	.text\n"
+"	.balign 4\n"
+"	.globl klcko_longjmp\n"
+"	.type klcko_longjmp, #function\n"
+"klcko_longjmp:"
+"	ldmia	r0, {r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}\n"
+"	movs	r0, r2\n"
+"	moveq	r0, #1\n"
+"	mov	    r1, #0\n"
+"	bx lr\n"
+"	.size klcko_longjmp,.-klcko_longjmp\n"
+);
+#endif
+
