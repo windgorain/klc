@@ -3,6 +3,7 @@
 *
 ********************************************************/
 #include "utl/ulc_user.h"
+#include "utl/array_bit_opt.h"
 #include "bpf/tcp_bpf.h"
 #include "spf/spf_string.h"
 #include "spf/core/spf_module.h"
@@ -11,6 +12,7 @@
 
 static char g_http_sniffer_event_kp_in[256];
 static int g_http_sniffer_event_kp_ok = 0;
+static U32 g_http_sniffer_port[2048]; 
 
 static inline void _http_sniffer_print(LSTR_S *str)
 {
@@ -47,7 +49,7 @@ static void _http_sniffer_process(TCP_HEAD_S *tcp_hdr, void *data_end)
 {
     LSTR_S host = {0};
 
-    if (tcp_hdr->usDstPort != htons(80)) {
+    if (! ArrayBit_Test(g_http_sniffer_port, tcp_hdr->usDstPort)) {
         return;
     }
 
@@ -136,6 +138,7 @@ static int _http_sniffer_event_init_probe(void)
 
 static int _http_sniffer_event_init(void)
 {
+    ArrayBit_Set(g_http_sniffer_port, htons(80));
     return _http_sniffer_event_init_probe();
 }
 
@@ -144,6 +147,132 @@ static int _http_sniffer_event_fini1(void)
     if (g_http_sniffer_event_kp_ok) {
         g_http_sniffer_event_kp_ok = 0;
         unregister_kprobe(g_http_sniffer_event_kp_in);
+    }
+
+    return 0;
+}
+
+static void _http_sniffer_show_ports(OUT char *buf, int buf_size)
+{
+    int i;
+    int len;
+    int count = 0;
+
+    len = snprintf(buf, buf_size, "Sniffer ports:\n");
+
+    for (i=1; i<65536; i++) {
+        if (buf_size < len + 50) {
+            break;
+        }
+
+        if (ArrayBit_Test(g_http_sniffer_port, htons(i))) {
+            count ++;
+            len += snprintf(buf + len, buf_size - len, " %u", i);
+            if (count % 8 == 0) {
+                len += snprintf(buf + len, buf_size - len, "\n");
+            }
+        }
+    }
+
+    snprintf(buf + len, buf_size - len, "\n");
+}
+
+static void _http_sniffer_add_ports(U16 min_port, U16 max_port)
+{
+    for (int i=min_port; i<=max_port; i++) {
+        ArrayBit_Set(g_http_sniffer_port, htons(i));
+    }
+}
+
+static void _http_sniffer_set_ports(U16 min_port, U16 max_port)
+{
+    memset(g_http_sniffer_port, 0, sizeof(g_http_sniffer_port));
+    _http_sniffer_add_ports(min_port, max_port);
+}
+
+static void _http_sniffer_del_ports(U16 min_port, U16 max_port)
+{
+    for (int i=min_port; i<=max_port; i++) {
+        ArrayBit_Clr(g_http_sniffer_port, htons(i));
+    }
+}
+
+static void _http_sniffer_cmd_help(char *buf, int buf_size)
+{
+    snprintf(buf, buf_size, "Usage: \n"
+            "http_sniffer show port\n"
+            "http_sniffer add port min max\n"
+            "http_sniffer del port min max\n"
+            "http_sniffer set port min max\n");
+}
+
+static void _http_sniffer_set_port(int argc, char **argv, char *output_buf, int buf_size)
+{
+    char *min_port_str = (argc > 3) ? argv[3] : "0";
+    char *max_port_str = (argc > 4) ? argv[4] : "0";
+    U16 min_port = atoi(min_port_str);
+    U16 max_port = atoi(max_port_str);
+
+    if (max_port < min_port) {
+        U16 tmp = min_port;
+        min_port = max_port;
+        max_port = tmp;
+    }
+
+    _http_sniffer_set_ports(min_port, max_port);
+}
+
+static void _http_sniffer_add_port(int argc, char **argv, char *output_buf, int buf_size)
+{
+    char *min_port_str = (argc > 3) ? argv[3] : "0";
+    char *max_port_str = (argc > 4) ? argv[4] : "0";
+    U16 min_port = atoi(min_port_str);
+    U16 max_port = atoi(max_port_str);
+
+    if (max_port < min_port) {
+        U16 tmp = min_port;
+        min_port = max_port;
+        max_port = tmp;
+    }
+
+    _http_sniffer_add_ports(min_port, max_port);
+}
+
+static void _http_sniffer_del_port(int argc, char **argv, char *output_buf, int buf_size)
+{
+    char *min_port_str = (argc > 3) ? argv[3] : "0";
+    char *max_port_str = (argc > 4) ? argv[4] : "0";
+    U16 min_port = atoi(min_port_str);
+    U16 max_port = atoi(max_port_str);
+
+    if (max_port < min_port) {
+        U16 tmp = min_port;
+        min_port = max_port;
+        max_port = tmp;
+    }
+
+    _http_sniffer_del_ports(min_port, max_port);
+}
+
+SEC(".spf.cmd/cmd_main")
+int _http_sniffer_cmd_main(int argc, char **argv, char *output_buf, int buf_size)
+{
+    if (argc < 3) {
+        _http_sniffer_cmd_help(output_buf, buf_size);
+        return -1;
+    }
+
+    if ((strcmp(argv[1], "show")== 0) && (strcmp(argv[2], "port") == 0)) {
+        _http_sniffer_show_ports(output_buf, buf_size);
+    } else if ((strcmp(argv[1], "set")== 0) && (strcmp(argv[2], "port") == 0)) {
+        _http_sniffer_set_port(argc, argv, output_buf, buf_size);
+    } else if ((strcmp(argv[1], "add")== 0) && (strcmp(argv[2], "port") == 0)) {
+        _http_sniffer_add_port(argc, argv, output_buf, buf_size);
+    } else if ((strcmp(argv[1], "del")== 0) && (strcmp(argv[2], "port") == 0)) {
+        _http_sniffer_del_port(argc, argv, output_buf, buf_size);
+    } else {
+        _http_sniffer_cmd_help(output_buf, buf_size);
+        return -1;
     }
 
     return 0;

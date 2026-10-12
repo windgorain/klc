@@ -7,7 +7,9 @@
 #ifndef _KLC_SYM_H_
 #define _KLC_SYM_H_
 
+#include "utl/types.h"
 #include "klc/klc_def.h"
+#include "utl/ulc_user_sys.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,6 +72,10 @@ static inline void * skb_put(struct sk_buff *skb, unsigned int len)
     return (void*)(long)ulc_call_sym(0, klc_skb_put, (long)skb, len);
 }
 
+S64 ktime_get_coarse_with_offset(int type)
+{
+    return ulc_call_sym(0, ktime_get_coarse_with_offset, type);
+}
 #ifdef __cplusplus
 }
 #endif

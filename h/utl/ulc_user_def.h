@@ -111,8 +111,6 @@ extern "C" {
     _ret; \
 })
 
-#define time(a) ulc_sys_time(a)
-
 #undef assert
 #define assert(x) 
 
@@ -164,10 +162,6 @@ extern "C" {
 #undef MEM_CopyToUser
 #define MEM_CopyToUser(to,from,n) ulc_sys_copy_to_user(to,from,n)
 
-#define malloc(a) ulc_sys_malloc(a)
-#define free(a) ulc_sys_free(a)
-#define realloc(a,b) ulc_sys_realloc(a,b)
-
 #define socket(a,b,c) ulc_sys_socket(a,b,c)
 #define bind(a,b,c) ulc_sys_bind(a,b,c)
 #define connect(a,b,c) ulc_sys_connect(a,b,c)
@@ -190,46 +184,6 @@ extern "C" {
 #define sched_getcpu() bpf_get_smp_processor_id()
 
 
-
-#define SPF_SDIV(_a, _b) ({ \
-        BOOL_T _aneg = (_a) < 0; \
-        BOOL_T _bneg = (_b) < 0; \
-        U64 _adiv = _aneg ? -(_a) : (_a); \
-        U64 _bdiv = _bneg ? -(_b) : (_b); \
-        U64 _out = _adiv / _bdiv; \
-        (S64) (_aneg != _bneg ? -_out : _out); \
-        })
-
-
-#define SPF_SMOD(_a, _b) ({ \
-        BOOL_T _aneg = (_a) < 0; \
-        BOOL_T _bneg = (_b) < 0; \
-        U64 _adiv = _aneg ? -(_a) : (_a); \
-        U64 _bdiv = _bneg ? -(_b) : (_b); \
-        U64 _out = _adiv % _bdiv; \
-        (S64) (_aneg != _bneg ? -_out : _out); \
-        })
-
-
-#define SPF_SPOW(_a, _b) ({ \
-        U64 _r = 1; \
-        U64 _base = (_a); \
-        if ((_b) < 0) { \
-            _r = 0; \
-        } else { \
-            for (int _i=0; _i<(_b); _i++) { \
-                _r *= _base; \
-            } \
-        } \
-        _r; \
-    })
-
-
-static inline long SPF_FABS(long a)
-{
-    if (a >= 0) return a;
-    return -a;
-}
 
 
 #endif

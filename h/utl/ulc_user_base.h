@@ -39,6 +39,7 @@ extern "C" {
         case 0: break; \
     } \
     if (_count <= 10) { _ret = bpf_snprintf(buf,size,_fmt,_d,_count*8);} \
+    if (_ret > 0) _ret --;  \
     _ret; \
 })
 

@@ -69,7 +69,6 @@ static inline void _luaxdp_print_host(void *L)
         }
     }
 
-    
     KLCHLP_NameRun("lua_pop", 0, L, 1);
 }
 

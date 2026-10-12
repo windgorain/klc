@@ -11,8 +11,8 @@ extern "C"
 #endif
 
 
-#define _BS_ARG_N(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,N,...) N
-#define BS_ARG_COUNT(...) _BS_ARG_N(0,##__VA_ARGS__,10,9,8,7,6,5,4,3,2,1,0)
+#define _BS_ARG_N(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,N,...) N
+#define BS_ARG_COUNT(...) _BS_ARG_N(0,##__VA_ARGS__,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0)
 
 
 #define _BS_ARG_GET1(a0,a1,...) (a1)
