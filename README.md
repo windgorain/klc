@@ -12,7 +12,6 @@ You just need to compile and load KLC to run SPF files in the Linux kernel.
 # Compile
 ```
 ./build_ko.sh   #compile kernel ko module
-./build_app.sh  #compile apps
 ```
 
 # Load
