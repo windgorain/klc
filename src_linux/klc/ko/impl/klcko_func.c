@@ -174,6 +174,7 @@ void * klc_get_current_mm(void)
     return current->mm;
 }
 
+
 void * klc_get_current_netns(void)
 {
 	return current->nsproxy->net_ns;
@@ -184,7 +185,7 @@ int klc_get_bpf_proto_size(void)
     return sizeof(struct bpf_func_proto);
 }
 
-int klc_init_kprobe(KLC_KPROBE_PARAM_S *p)
+int klc_register_kprobe(KLC_KPROBE_PARAM_S *p)
 {
     struct kprobe *kp = p->kp;
 
@@ -198,7 +199,7 @@ int klc_init_kprobe(KLC_KPROBE_PARAM_S *p)
     kp->pre_handler = p->pre_handler;
     kp->post_handler = p->post_handler;
 
-    return 0;
+    return register_kprobe(kp);
 }
 
 void * klc_get_bpf_proto_func(struct bpf_verifier_ops *proto)
@@ -442,6 +443,81 @@ void klc_netif_start_queue(void *dev)
 void klc_netif_stop_queue(void *dev)
 {
     netif_stop_queue(dev);
+}
+
+void klc_put_task_struct(void *t)
+{
+    put_task_struct(t);
+}
+
+
+struct net * klc_get_net_ns_by_pid(pid_t pid)
+{
+    struct task_struct *tsk;
+    struct net *net = NULL;
+    
+    rcu_read_lock();
+	tsk = pid_task(find_vpid(pid), PIDTYPE_PID);
+    if (tsk) {
+        task_lock(tsk);
+        if (tsk->nsproxy)
+            net = get_net(tsk->nsproxy->net_ns);
+        task_unlock(tsk);
+    }
+    rcu_read_unlock();
+    
+    return net;
+}
+
+
+void klc_put_net(struct net *net)
+{
+    put_net(net);
+}
+
+
+struct sock * klc_get_sock_by_socket(struct socket *res)
+{
+    return res->sk;
+}
+
+int klc_socket_recv(struct socket *sock, void *buf, int buf_len, int flags)
+{
+    struct msghdr msg = {0};
+    struct kvec iov;
+
+    
+    iov.iov_base = buf;
+    iov.iov_len  = buf_len;
+
+    
+    iov_iter_kvec(&msg.msg_iter, ITER_DEST, &iov, 1, buf_len);
+
+    return sock_recvmsg(sock, &msg, flags);
+}
+
+int klc_socket_send(struct socket *sock, void *buf, int buf_len, int flags)
+{
+    struct msghdr msg = {0};
+    struct kvec iov;
+
+    iov.iov_base = buf;
+    iov.iov_len  = buf_len;
+    msg.msg_flags = flags;
+
+    iov_iter_kvec(&msg.msg_iter, ITER_SOURCE, &iov, 1, buf_len);
+
+    return sock_sendmsg(sock, &msg);
+}
+
+int klc_sock_setsockopt(struct socket *sock, int level, int optname, void *optval, int optlen)
+{
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
+    return do_sock_setsockopt(sock, false, level, optname, KERNEL_SOCKPTR(optval), optlen);
+#else
+    int (*setter)(void *, int, int sockptr_t, int) = (level == SOL_SOCKET ? sock_setsockopt : socket->ops->setsockopt);
+	return setter(sock, level, optname, KERNEL_SOCKPTR(optval), (U32)optlen);
+#endif
 }
 
 int KlcKoFunc_Init(void)

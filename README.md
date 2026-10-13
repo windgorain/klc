@@ -60,6 +60,6 @@ cd -
 | samples/klcfunc | Use EBPF to extend EBPF Helper functions |
 | samples/klua | Print LUA info in the kernel |
 | samples/luaxdp | Use LUA in XDP programs |
-| spf/kapp/http_sniffer | Monitor HTTP requested by the local machine, and print the process name/ID/domain |
+| spf/kapp/sniffer | Monitor HTTP requested by the local machine, and print the process name/ID/domain |
 | spf/drivers/snull | Simple network device driver |
 

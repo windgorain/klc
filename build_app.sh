@@ -16,7 +16,7 @@ cd samples/luaxdp/
 ./build.sh
 cd - > /dev/null
 
-cd spf/kapp/http_sniffer
+cd spf/kapp/sniffer
 ./build.sh
 cd - > /dev/null
 
