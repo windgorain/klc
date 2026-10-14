@@ -17,7 +17,7 @@ struct net_device;
 
 static inline struct net_device * alloc_etherdev_mqs(int sizeof_priv, unsigned int txqs, unsigned int rxqs)
 {
-    if (ulc_sys_ptr_size() == 4) {
+    if (klc_is_sys32()) {
         U64 p1 = sizeof_priv | (U64)txqs << 32;
         return (void*)(long)ulc_call_sym(0, alloc_etherdev_mqs, p1, rxqs);
     }

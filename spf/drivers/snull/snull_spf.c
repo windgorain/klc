@@ -58,7 +58,7 @@ static int _snull_init(void)
 {
     int ret;
 
-    if (ulc_sys_ptr_size() == 4) {
+    if (klc_is_sys32()) {
         g_snull_netdev_ops.ndo_start_xmit = (void*)_snull_xmit32;
     }
 

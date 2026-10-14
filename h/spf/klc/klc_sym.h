@@ -16,6 +16,7 @@
 #include "klc_sym_skb.h"
 #include "klc_sym_sock.h"
 #include "klc_sym_kprobe.h"
+#include "klc_sym_thread.h"
 #include "klc_driver.h"
 
 #ifdef __cplusplus

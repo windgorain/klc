@@ -20,5 +20,6 @@ sudo ${KLCTOOL} init
 sudo ${KLCTOOL} load bare spf/bare/spf_loader.[ARCH].bare
 sudo ${KLCTOOL} load spf -i kbase.spfmap spf/base/spfmap.spf
 sudo ${KLCTOOL} load spf -i kbase.khelper spf/khelper_klc.spf
+sudo ${KLCTOOL} load spf -i kbase.ksocket spf/ksocket_klc.spf
 sudo ${KLCTOOL} load spf -i kbase.hookspf spf/hookspf_klc.spf
 

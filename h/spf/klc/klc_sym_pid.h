@@ -25,7 +25,7 @@ static inline struct task_struct * pid_task(struct pid *pid, int type)
 {
     U64 p1 = (long)pid;
 
-    if (ulc_sys_ptr_size() == 4) {
+    if (klc_is_sys32()) {
         p1 |= (((U64)type) << 32);
     }
 
@@ -48,7 +48,7 @@ static inline struct task_struct * get_pid_task(struct pid *pid, int type)
 {
     U64 p1 = (long)pid;
 
-    if (ulc_sys_ptr_size() == 4) {
+    if (klc_is_sys32()) {
         p1 |= (((U64)type) << 32);
     }
 

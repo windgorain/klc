@@ -38,7 +38,7 @@ static inline void unregister_kprobe(void *kp)
 
 static inline int klc_get_pt_params(void *p, struct pt_regs *regs, OUT  KLC_PT_PARAM_S *param)
 {
-    if (ulc_sys_ptr_size() == 4) {
+    if (klc_is_sys32()) {
         regs = (void*)(LONG)(((U64)(LONG)p) >> 32);
     }
 

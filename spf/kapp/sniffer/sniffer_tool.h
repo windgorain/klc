@@ -77,11 +77,11 @@ static void _sniffer_del_ports(U16 min_port, U16 max_port, SNIFFER_PORTS_S *port
 
 static void _sniffer_cmd_help(char *buf, int buf_size)
 {
-    snprintf(buf, buf_size, "Usage: \n"
-            "show port\n"
-            "add port min max\n"
-            "del port min max\n"
-            "set port min max\n");
+    snprintf(buf, buf_size, "Usage:\n"
+            " show port\n"
+            " add port min max\n"
+            " del port min max\n"
+            " set port min max\n");
 }
 
 static void _sniffer_set_port(int argc, char **argv, char *output_buf, int buf_size, SNIFFER_PORTS_S *ports)

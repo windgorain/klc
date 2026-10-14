@@ -68,6 +68,7 @@ static char * (*ulc_sys_setlocale)(int category, const char *locale) = (void*)UL
 static int (*ulc_sys_usleep)(U32 usec) = (void*)ULC_ID_USLEEP;
 static void (*ulc_sys_exit)(int status) = (void*)ULC_ID_EXIT;
 static void (*ulc_sys_abort)(void) = (void*)ULC_ID_ABORT;
+static int (*ulc_sys_fcntl)(int fd, int cmd, int flags) = (void*)ULC_ID_FCNTL;
 static char * (*ulc_sys_getenv)(const char *name) = (void*)ULC_ID_GETENV;
 static U64 (*ulc_sys_clock)(void) = (void*)ULC_ID_CLOCK;
 static U64 (*ulc_sys_time)(void *t) = (void*)ULC_ID_TIME;
@@ -89,8 +90,11 @@ static int (*ulc_sys_recv)(int s, char *buf, int len, int flags) = (void*)ULC_ID
 static int (*ulc_sys_send)(int s, char *buf, int len, int flags) = (void*)ULC_ID_SEND;
 static int (*ulc_sys_close)(int s) = (void*)ULC_ID_CLOSE;
 static int (*ulc_sys_setsockopt)(int sockfd, int level, int optname, const void *optval, int optlen) = (void*)ULC_ID_SETSOCKOPT;
+static int (*ulc_sys_shutdown)(int s, int how) = (void*)ULC_ID_SHUTDOWN;
 
-static int (*ulc_pthread_create)(void *thread, const void *attr, void *fn, void *arg) = (void*)ULC_ID_THREAD_CREATE;
+static int (*ulc_pthread_create)(void *tid, const void *attr, void *fn, void *arg) = (void*)ULC_ID_THREAD_CREATE;
+static void (*ulc_pthread_detach)(unsigned long tid) = (void*)ULC_ID_THREAD_DETACH;
+static void (*ulc_pthread_set_name)(unsigned long tid, const void *name) = (void*)ULC_ID_THREAD_SET_NAME;
 
 static void (*ulc_sys_rcu_call)(void *rcu, void *func) = (void*)ULC_ID_RCU_CALL;
 static int (*ulc_sys_rcu_lock)(void) = (void*)ULC_ID_RCU_LOCK;

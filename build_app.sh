@@ -1,18 +1,22 @@
 #!/bin/bash
 
-cd samples/hello_world/
+cd samples/hello_world
 ./build.sh
 cd - > /dev/null
 
-cd samples/klcfunc/
+cd samples/klcfunc
 ./build.sh
 cd - > /dev/null
 
-cd samples/klua/
+cd samples/tcp_echo
 ./build.sh
 cd - > /dev/null
 
-cd samples/luaxdp/
+cd samples/klua
+./build.sh
+cd - > /dev/null
+
+cd samples/luaxdp
 ./build.sh
 cd - > /dev/null
 

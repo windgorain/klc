@@ -32,10 +32,16 @@ sudo ./samples/test_hello_world.sh
 #在XDP程序中调用自定义函数
 sudo ./samples/test_klcfunc.sh eth0
 
+#内核TCP Echo
+sudo ./samples/test_tcp_echo.sh
+
 #在内核中打印LUA信息
 sudo ./app/lua/test_lua.sh
 
 #在XDP程序中使用LUA
+cd ../samples/luaxdp/
+./build.sh
+cd -
 sudo ./samples/test_luaxdp.sh eth0
 
 #监控本机请求的HTTP域名, 并将进程名/进程号/域名打印出来 

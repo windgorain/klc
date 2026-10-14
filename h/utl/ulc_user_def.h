@@ -147,8 +147,8 @@ extern "C" {
 
 #undef MEM_VMalloc
 #define MEM_VMalloc(uiSize) ulc_sys_vmalloc(uiSize)
-#undef MEM_ZMValloc
-#define MEM_ZMValloc(x) ({void *p = ulc_sys_vmalloc(x); if (p) {memset(p, 0, (x));} p;})
+#undef MEM_ZVMalloc
+#define MEM_ZVMalloc(x) ({void *p = ulc_sys_vmalloc(x); if (p) {memset(p, 0, (x));} p;})
 #undef MEM_VFree
 #define MEM_VFree(x) ulc_sys_vfree(x)
 
@@ -170,6 +170,7 @@ extern "C" {
 #define recv(a,b,c,d) ulc_sys_recv(a,b,c,d)
 #define send(a,b,c,d) ulc_sys_send(a,b,c,d)
 #define close(a) ulc_sys_close(a)
+#define shutdown(a,b) ulc_sys_shutdown(a,b)
 #define setsockopt(a,b,c,d,e) ulc_sys_setsockopt(a,b,c,d,e)
 
 #define pthread_create(a,b,c,d) ulc_pthread_create(a,b,c,d)
