@@ -32,7 +32,7 @@ sudo ./samples/test_hello_world.sh
 #在XDP程序中调用自定义函数
 sudo ./samples/test_klcfunc.sh eth0
 
-#内核TCP Echo
+#kernel TCP Echo
 sudo ./samples/test_tcp_echo.sh
 
 #在内核中打印LUA信息

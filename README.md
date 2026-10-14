@@ -31,6 +31,9 @@ sudo ./samples/test_hello_world.sh
 #Calling a custom function in an XDP program
 sudo ./samples/test_klcfunc.sh eth0
 
+#kernel TCP Echo
+sudo ./samples/test_tcp_echo.sh
+
 #Print LUA information in the kernel
 sudo ./app/lua/test_lua.sh
 
