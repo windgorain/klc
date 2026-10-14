@@ -65,6 +65,7 @@ cd -
 | --- | --- |
 | samples/hello_world| KLC Hello World 程序 |
 | samples/klcfunc | 使用EBPF扩展EBPF Helper功能 |
+| samples/tcp_echo| kernel TCP Echo |
 | samples/klua | 在内核中打印LUA信息 |
 | samples/luaxdp | 在XDP程序中使用LUA |
 | spf/kapp/sniffer | 监控本机请求的HTTP域名, 并将进程名/进程号/域名打印出来 |

@@ -58,6 +58,7 @@ cd -
 | --- | --- |
 | samples/hello_world | KLC Hello World Program |
 | samples/klcfunc | Use EBPF to extend EBPF Helper functions |
+| samples/tcp_echo| kernel TCP Echo |
 | samples/klua | Print LUA info in the kernel |
 | samples/luaxdp | Use LUA in XDP programs |
 | spf/kapp/sniffer | Monitor HTTP requested by the local machine, and print the process name/ID/domain |
