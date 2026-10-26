@@ -10,6 +10,9 @@
 static KUTL_MODINIT_S g_klcko_oscomp_init[] = {
     {.name="netlink", .init=KlcKoNl_Init, .fini=KlcKoNl_Fini},
     {.name="inline", .init=KlcKoInline_Init, .fini=NULL},
+    {.name="inlineskb", .init=KlcKoInline_InitSkb, .fini=NULL},
+    {.name="inlinenetdev", .init=KlcKoInline_InitNetdev, .fini=NULL},
+    {.name="inlinebottomhalf", .init=KlcKoInline_InitBottomHalf, .fini=NULL},
     {.name=NULL}
 };
 

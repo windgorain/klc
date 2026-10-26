@@ -7,6 +7,7 @@
 #include "ko/ko_utl.h"
 #include "ko/ko_netfilter.h"
 #include "linux/bpf_verifier.h"
+#include "linux/freezer.h"
 #include "../base/klcko_pt.h"
 #include "utl/mybpf_tc_def.h"
 
@@ -25,14 +26,41 @@
 #define KLCKO_OSBASE_BPF_PROG
 #endif
 
-#if 1 
-
-int KlcKoFunc_NumPossibleCpus(void)
+U32 klc_gfp_flags(int type)
 {
-    return num_possible_cpus();
+    switch (type) {
+        case KLC_GFP_ATOMIC: return GFP_ATOMIC;
+        case KLC_GFP_NOWAIT: return GFP_NOWAIT;
+        case KLC_GFP_KERNEL: return GFP_KERNEL;
+    }
+
+    return 0;
 }
 
-#endif
+int klc_num_cpus(int type)
+{
+    switch (type) {
+        case GET_CPUS_TYPE_MAX: return nr_cpu_ids;
+        case GET_CPUS_TYPE_POSSIBLE: return num_possible_cpus();
+        case GET_CPUS_TYPE_PRESENT: return num_present_cpus();
+        case GET_CPUS_TYPE_ACTIVE: return num_active_cpus();
+    }
+
+    return 0;
+}
+
+int klc_walk_cpus(void (*func)(int), int type)
+{
+    int cpu;
+
+    switch (type) {
+        case WALK_CPUS_TYPE_POSSIBLE: for_each_possible_cpu(cpu) { func(cpu); } break;
+        case WALK_CPUS_TYPE_ONLINE: for_each_online_cpu(cpu) { func(cpu); } break;
+        case WALK_CPUS_TYPE_PRESENT: for_each_present_cpu(cpu) { func(cpu); } break;
+    }
+
+    return 0;
+}
 
 int klc_init_nf_hook_ops(KLC_PARAM_S *p)
 {
@@ -239,72 +267,23 @@ int klc_init_bpf_proto(U64 p1, U64 p2)
     return 0;
 }
 
-void klc_skb_reserve(U64 p1, U64 p2)
-{
-    struct sk_buff *skb = (void*)(LONG)p1;
-    int len = p2;
-
-    skb_reserve(skb, len);
-}
-
-bool klc_pskb_may_pull(U64 p1, U64 p2)
-{
-    return pskb_may_pull((void*)(long)p1, p2);
-}
-
-void * klc_skb_put(U64 p1, U64 p2)
-{
-    return skb_put((void*)(long)p1, p2);
-}
-
-void klc_skb_reset_network_header(struct sk_buff *skb)
-{
-    skb_reset_network_header(skb);
-}
-
-void klc_skb_reset_transport_header(struct sk_buff *skb)
-{
-    skb_reset_transport_header(skb);
-}
-
-void klc_skb_set_transport_header(U64 p1, U64 p2)
-{
-    struct sk_buff *skb = (void*)(LONG)p1;
-    const int offset = p2;
-
-    skb_set_transport_header(skb, offset);
-}
-
-int klc_skb_headroom(struct sk_buff *skb)
-{
-    return skb_headroom(skb);
-}
-
-void * klc_create_skb(int data_len)
-{
-    struct sk_buff *skb;
-    skb = alloc_skb(data_len + LL_MAX_HEADER, GFP_ATOMIC);
-    if (! skb) {
-        return NULL;
-	}
-
-    skb_reserve(skb, LL_MAX_HEADER);
-    skb_reset_network_header(skb);
-
-    return skb;
-}
-
-void klc_free_skb(void *skb)
-{
-	kfree_skb(skb);
-}
-
 void klc_get_skb_struct_info(OUT KLC_SKB_STRUCT_INFO_S *info)
 {
     info->struct_size = sizeof(struct sk_buff);
-    info->cb_offset = offsetof(struct sk_buff, cb);
-    info->mark_offset = offsetof(struct sk_buff, mark);
-    info->priority_offset  = offsetof(struct sk_buff, priority);
+    info->cb_off = offsetof(struct sk_buff, cb);
+    info->mark_off = offsetof(struct sk_buff, mark);
+    info->priority_off = offsetof(struct sk_buff, priority);
+    info->len_off = offsetof(struct sk_buff, len);
+    info->data_len_off = offsetof(struct sk_buff, data_len);
+    info->protocol_off = offsetof(struct sk_buff, protocol);
+    info->sk_off = offsetof(struct sk_buff, sk);
+    info->dev_off = offsetof(struct sk_buff, dev);
+    info->csum_off = offsetof(struct sk_buff, csum);
+    info->head_off = offsetof(struct sk_buff, head);
+    info->end_off = offsetof(struct sk_buff, end);
+    info->data_off = offsetof(struct sk_buff, data);
+    info->tail_off = offsetof(struct sk_buff, tail);
+    info->users_off = offsetof(struct sk_buff, users);
 }
 
 int klc_get_skb_info(U64 p1, U64 p2)
@@ -317,8 +296,8 @@ int klc_get_skb_info(U64 p1, U64 p2)
     info->tc_index = skb->tc_index;
     info->vlan_tci = skb->vlan_tci;
     info->vlan_proto = skb->vlan_proto;
-    info->len= skb->len;
-    info->fragment_len= skb->data_len;
+    info->len = skb->len;
+    info->fragment_len = skb->data_len;
     info->head_len = skb->len - skb->data_len;
     info->pkt_type = skb->pkt_type;
     info->tc_at_ingress = skb->tc_at_ingress;
@@ -334,6 +313,28 @@ int klc_get_skb_info(U64 p1, U64 p2)
     info->end = (u64)(unsigned long)skb->end;
 
     return 0;
+}
+
+void klc_skb_set_pkt_type(U64 p1, U64 p2)
+{
+    struct sk_buff *skb = (void*)(LONG)p1;
+    skb->pkt_type = p2;
+}
+
+U8 klc_skb_get_pkt_type(struct sk_buff *skb)
+{
+    return skb->pkt_type;
+}
+
+void klc_skb_set_ip_summed(U64 p1, U64 p2)
+{
+    struct sk_buff *skb = (void*)(LONG)p1;
+    skb->ip_summed = p2;
+}
+
+U8 klc_skb_get_ip_summed(struct sk_buff *skb)
+{
+    return skb->ip_summed;
 }
 
 
@@ -403,7 +404,7 @@ void klc_set_pt_rc(U64 p1, U64 p2)
     PT_REGS_RC(regs) = p2;
 }
 
-void * klc_alloc_percpu_mem(U64 p1, U64 p2)
+void __percpu * klc_alloc_percpu_mem(U64 p1, U64 p2)
 {
     int percpu_size = p1;
     int align = p2;
@@ -411,7 +412,7 @@ void * klc_alloc_percpu_mem(U64 p1, U64 p2)
     return __alloc_percpu_gfp(percpu_size, align, GFP_ATOMIC);
 }
 
-void klc_free_percpu_mem(void *ptr)
+void klc_free_percpu_mem(void __percpu *ptr)
 {
     free_percpu(ptr);
 }
@@ -435,14 +436,15 @@ int klc_init_netdev(U64 p1, U64 p2, U64 p3, U64 p4)
     return 0;
 }
 
-void klc_netif_start_queue(void *dev)
+int klc_netdev_get_info(U64 p1, U64 p2)
 {
-    netif_start_queue(dev);
-}
+    struct net_device *dev = (void*)(long)p1;
+    OUT KLC_NETDEV_INFO_S *info = (void*)(long)p2;
 
-void klc_netif_stop_queue(void *dev)
-{
-    netif_stop_queue(dev);
+    info->real_num_tx_queues = dev->real_num_tx_queues;
+    ether_addr_copy(info->dev_addr, dev->dev_addr);
+
+    return 0;
 }
 
 void klc_put_task_struct(void *t)
@@ -470,12 +472,6 @@ struct net * klc_get_net_ns_by_pid(pid_t pid)
 }
 
 
-void klc_put_net(struct net *net)
-{
-    put_net(net);
-}
-
-
 struct sock * klc_get_sock_by_socket(struct socket *res)
 {
     return res->sk;
@@ -491,7 +487,11 @@ int klc_socket_recv(struct socket *sock, void *buf, int buf_len, int flags)
     iov.iov_len  = buf_len;
 
     
+#ifdef ITER_DEST
     iov_iter_kvec(&msg.msg_iter, ITER_DEST, &iov, 1, buf_len);
+#else
+    iov_iter_kvec(&msg.msg_iter, READ, &iov, 1, buf_len);
+#endif
 
     return sock_recvmsg(sock, &msg, flags);
 }
@@ -505,7 +505,11 @@ int klc_socket_send(struct socket *sock, void *buf, int buf_len, int flags)
     iov.iov_len  = buf_len;
     msg.msg_flags = flags;
 
+#ifdef ITER_SOURCE
     iov_iter_kvec(&msg.msg_iter, ITER_SOURCE, &iov, 1, buf_len);
+#else
+    iov_iter_kvec(&msg.msg_iter, WRITE, &iov, 1, buf_len);
+#endif
 
     return sock_sendmsg(sock, &msg);
 }
@@ -514,12 +518,37 @@ int klc_sock_setsockopt(struct socket *sock, int level, int optname, void *optva
 {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 7, 0)
     return do_sock_setsockopt(sock, false, level, optname, KERNEL_SOCKPTR(optval), optlen);
-#else
-    int (*setter)(void *, int, int sockptr_t, int) = (level == SOL_SOCKET ? sock_setsockopt : socket->ops->setsockopt);
+#elif defined(KERNEL_SOCKPTR)
+    int (*setter)(struct socket *, int, int, sockptr_t, unsigned int) = (level == SOL_SOCKET ? sock_setsockopt : sock->ops->setsockopt);
 	return setter(sock, level, optname, KERNEL_SOCKPTR(optval), (U32)optlen);
+#else
+    return -1;
 #endif
 }
 
+bool klc_need_resched(void)
+{
+    return need_resched();
+}
+
+bool klc_try_to_freeze(void)
+{
+    return try_to_freeze();
+}
+
+void klc_hard_tx_lock(U64 p1, U64 p2)
+{
+    struct net_device *dev = (void*)(long)p1;
+    void *txq = (void*)(long)p2;
+    HARD_TX_LOCK(dev, txq, smp_processor_id());
+}
+
+void klc_hard_tx_unlock(U64 p1, U64 p2)
+{
+    struct net_device *dev = (void*)(long)p1;
+    void *txq = (void*)(long)p2;
+    HARD_TX_UNLOCK(dev, txq);
+}
 int KlcKoFunc_Init(void)
 {
     return 0;

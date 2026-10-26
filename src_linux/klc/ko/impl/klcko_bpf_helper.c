@@ -324,7 +324,9 @@ static inline int ulc_mmap_mprotect(void *m, int size, U32 flag)
 
     vm = func3(m);
     if (vm) {
+#ifdef VM_FLUSH_RESET_PERMS
 		vm->flags |= VM_FLUSH_RESET_PERMS;
+#endif
     }
 
     ret = func1(m, exe_size/PAGE_SIZE);
@@ -390,8 +392,11 @@ static inline int ulc_add_timer(void *timer_node, U32 ms)
 
 static inline void ulc_del_timer(void *timer_node)
 {
-    
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 2, 0)
     timer_delete(timer_node);
+#else
+    del_timer(timer_node);
+#endif
 }
 
 const void ** ulc_get_base_helpers(void)

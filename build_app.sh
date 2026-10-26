@@ -24,6 +24,10 @@ cd spf/kapp/sniffer
 ./build.sh
 cd - > /dev/null
 
+cd spf/kapp/pkttest
+./build.sh
+cd - > /dev/null
+
 cd spf/drivers/snull
 ./build.sh
 cd - > /dev/null

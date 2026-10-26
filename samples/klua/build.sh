@@ -1,2 +1,2 @@
-clang -O2 -I ../../h -target bpf -c *.c
+clang -O2 -I ../../h -I /usr/include/aarch64-linux-gnu -target bpf -c *.c
 cp *.o ../../bin/app/lua/

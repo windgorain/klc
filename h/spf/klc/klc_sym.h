@@ -15,8 +15,12 @@
 #include "klc_sym_netns.h"
 #include "klc_sym_skb.h"
 #include "klc_sym_sock.h"
+#include "klc_sym_ipoutput.h"
+#include "klc_sym_netdev.h"
 #include "klc_sym_kprobe.h"
 #include "klc_sym_thread.h"
+#include "klc_sym_cpus.h"
+#include "klc_sym_nf.h"
 #include "klc_driver.h"
 
 #ifdef __cplusplus

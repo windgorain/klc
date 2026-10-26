@@ -32,6 +32,7 @@ static __always_inline unsigned int KLCHLP_GetCGroupClassID(void *skb)
     return ret;
 }
 
+
 static __always_inline U64 _KLCHLP_Self(void *v, int v_size)
 {
     return _klc_helper(KLCHELP_SELF, (long)v, v_size, 0, 0);
@@ -40,7 +41,7 @@ static __always_inline U64 _KLCHLP_Self(void *v, int v_size)
 #define KLCHLP_Self(_v) _KLCHLP_Self((_v), sizeof(*(_v)));
 
 
-#define KLC_GET(P) ({typeof(P) _val=0; KLCHLP_Memcpy(&_val, &(P), sizeof(_val)); KLCHLP_Self(&_val);})
+#define KLC_GET(P) ({typeof(P) _val=0; KLCHLP_Memcpy(&_val, &(P), sizeof(_val)); _val = KLCHLP_Self(&_val); _val;})
 
 static __always_inline void * KLCHLP_SkbCreate(int data_len)
 {
@@ -153,7 +154,8 @@ static __always_inline int _KLCHLP_EventPublish(unsigned int event, MYBPF_PARAM_
         _p.p[2] = (long)BS_ARG_GET(3, ##__VA_ARGS__); \
         _p.p[3] = (long)BS_ARG_GET(4, ##__VA_ARGS__); \
         _KLCHLP_EventPublish(_event, &_p); \
-        KLCHLP_Self(&_p.bpf_ret); \
+        U64 _ret = KLCHLP_Self(&_p.bpf_ret); \
+        _ret; \
         })
 
 static __always_inline U64 KLCHLP_Load(void *mem, unsigned int count )

@@ -45,6 +45,9 @@ int KlcKo_Init(void);
 void KlcKo_Fini(void);
 
 int KlcKoInline_Init(void);
+int KlcKoInline_InitSkb(void);
+int KlcKoInline_InitNetdev(void);
+int KlcKoInline_InitBottomHalf(void);
 
 int KlcKoNl_Init(void);
 void KlcKoNl_Fini(void);

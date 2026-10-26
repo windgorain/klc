@@ -2,7 +2,8 @@ KLC_DIR = $(PWD)/..
 
 BASE_DIR = $(KLC_DIR)/../..
 
-ccflags-y := -I$(BASE_DIR)/h -I$(KLC_DIR)/h -I$(KLC_DIR)/ko -O2 -Wno-missing-prototypes -Wno-missing-declarations -mno-outline-atomics
+ccflags-y := -I$(BASE_DIR)/h -I$(KLC_DIR)/h -I$(KLC_DIR)/ko -O2 -Wno-missing-prototypes -Wno-missing-declarations
+ccflags-y += $(call cc-option, -mno-outline-atomics)
 
 obj-m := klc_impl.o klc_base.o klc_oscomp.o
 
@@ -10,6 +11,9 @@ klc_base-objs := base/klcko_base.o
 
 klc_oscomp-objs := oscomp/klcko_oscomp_init.o \
                    oscomp/klcko_nl.o \
+                   oscomp/klcko_inline_bottom_half.o \
+                   oscomp/klcko_inline_skb.o \
+                   oscomp/klcko_inline_netdev.o \
                    oscomp/klcko_inline.o
 
 klc_impl-objs := impl/klcko_impl_init.o \

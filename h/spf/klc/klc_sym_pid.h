@@ -23,13 +23,12 @@ static inline struct pid * find_vpid(int pid)
 
 static inline struct task_struct * pid_task(struct pid *pid, int type)
 {
-    U64 p1 = (long)pid;
-
     if (klc_is_sys32()) {
-        p1 |= (((U64)type) << 32);
+        U64 p1 = (U32)(long)pid; p1 |= (((U64)type) << 32);
+        return (void*)(long)ulc_call_sym(0, pid_task, p1);
+    } else {
+        return (void*)(long)ulc_call_sym(0, pid_task, pid, type);
     }
-
-    return (void*)(long)ulc_call_sym(0, pid_task, p1, type);
 }
 
 
@@ -46,13 +45,13 @@ static inline void put_pid(struct pid *pid)
 
 static inline struct task_struct * get_pid_task(struct pid *pid, int type)
 {
-    U64 p1 = (long)pid;
 
     if (klc_is_sys32()) {
-        p1 |= (((U64)type) << 32);
+        U64 p1 = (U32)(long)pid; p1 |= (((U64)(U32)type) << 32);
+        return (void*)(long)ulc_call_sym(0, get_pid_task, p1);
+    } else {
+        return (void*)(long)ulc_call_sym(0, get_pid_task, pid, type);
     }
-
-    return (void*)(long)ulc_call_sym(0, get_pid_task, p1, type);
 }
 
 

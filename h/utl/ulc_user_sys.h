@@ -6,6 +6,7 @@
 #ifndef _ULC_USER_SYS_H
 #define _ULC_USER_SYS_H
 
+#include "utl/int_types.h"
 #include "utl/args_def.h"
 #include "utl/mybpf_utl.h"
 #include "ulc_helper_id.h"
@@ -92,7 +93,7 @@ static int (*ulc_sys_close)(int s) = (void*)ULC_ID_CLOSE;
 static int (*ulc_sys_setsockopt)(int sockfd, int level, int optname, const void *optval, int optlen) = (void*)ULC_ID_SETSOCKOPT;
 static int (*ulc_sys_shutdown)(int s, int how) = (void*)ULC_ID_SHUTDOWN;
 
-static int (*ulc_pthread_create)(void *tid, const void *attr, void *fn, void *arg) = (void*)ULC_ID_THREAD_CREATE;
+static long (*ulc_pthread_create)(void *tid, const void *attr, void *fn, void *arg) = (void*)ULC_ID_THREAD_CREATE;
 static void (*ulc_pthread_detach)(unsigned long tid) = (void*)ULC_ID_THREAD_DETACH;
 static void (*ulc_pthread_set_name)(unsigned long tid, const void *name) = (void*)ULC_ID_THREAD_SET_NAME;
 

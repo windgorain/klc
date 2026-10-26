@@ -33,13 +33,13 @@ static inline int klc_init_netdev(struct net_device *dev, char *name, const KLC_
 
 static inline void netif_start_queue(struct net_device *dev)
 {
-    ulc_call_sym(-1, klc_netif_start_queue, dev);
+    ulc_call_sym(-1, netif_start_queue, dev);
 }
 
 
 static inline void netif_stop_queue(struct net_device *dev)
 {
-    ulc_call_sym(-1, klc_netif_stop_queue, dev);
+    ulc_call_sym(-1, netif_stop_queue, dev);
 }
 
 static inline int register_netdev(struct net_device *dev)

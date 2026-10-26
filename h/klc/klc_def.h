@@ -23,6 +23,27 @@ typedef struct {
     unsigned long long param[KLC_PARAM_NUM_MAX];
 }KLC_PARAM_S;
 
+enum {
+    KLC_GFP_ATOMIC = 0,
+    KLC_GFP_NOWAIT,
+    KLC_GFP_KERNEL,
+
+    KLC_GFP_MAX,
+};
+
+enum {
+    GET_CPUS_TYPE_MAX = 0,  
+    GET_CPUS_TYPE_POSSIBLE, 
+    GET_CPUS_TYPE_PRESENT,  
+    GET_CPUS_TYPE_ACTIVE,   
+};
+
+enum {
+    WALK_CPUS_TYPE_POSSIBLE,
+    WALK_CPUS_TYPE_PRESENT, 
+    WALK_CPUS_TYPE_ONLINE,  
+};
+
 typedef struct {
     unsigned short queue_mapping;
     unsigned short protocol;
@@ -49,10 +70,28 @@ typedef struct {
 
 typedef struct {
     unsigned short struct_size; 
-    unsigned short cb_offset;
-    unsigned short mark_offset;
-    unsigned short priority_offset;
+    unsigned short cb_off;
+    unsigned short mark_off;
+    unsigned short priority_off;
+    unsigned short len_off;      
+    unsigned short data_len_off; 
+    unsigned short protocol_off;
+    unsigned short sk_off;       
+    unsigned short dev_off;
+    unsigned short ip_summed_off;
+    unsigned short csum_off;
+    unsigned short head_off; 
+    unsigned short end_off;  
+    unsigned short data_off; 
+    unsigned short tail_off; 
+    unsigned short users_off;
 }KLC_SKB_STRUCT_INFO_S;
+
+typedef struct {
+    unsigned char dev_addr[6]; 
+    unsigned char reserved[2];
+    unsigned int real_num_tx_queues; 
+}KLC_NETDEV_INFO_S;
 
 typedef struct {
     unsigned long long param[5];

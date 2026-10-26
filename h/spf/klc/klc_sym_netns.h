@@ -30,7 +30,7 @@ static inline struct net * klc_get_net_ns_by_pid(int pid)
 
 static inline void put_net(struct net *net)
 {
-    ulc_call_sym(0, klc_put_net, net);
+    ulc_call_sym(0, put_net, net);
 }
 
 

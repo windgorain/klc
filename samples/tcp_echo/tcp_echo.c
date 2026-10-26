@@ -4,8 +4,6 @@
 * Description:
 ******************************************************************************/
 #include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <fcntl.h>
@@ -114,6 +112,7 @@ static void * _tcp_echo_task_main(void *arg)
 
     close(g_tcp_echo_service_fd);
     g_tcp_echo_service_fd = -1;
+    g_tcp_echo_stopping = 0;
     g_tcp_echo_running = 0;
 
     return NULL;
@@ -194,7 +193,7 @@ static int _tcp_echo_stop(void)
         ulc_sys_usleep(10000);
     }
 
-    g_tcp_echo_stopping = 0;
+    ulc_sys_usleep(100000);  
 
     return 0;
 }

@@ -65,5 +65,6 @@ cd -
 | samples/klua | Print LUA info in the kernel |
 | samples/luaxdp | Use LUA in XDP programs |
 | spf/kapp/sniffer | Monitor HTTP requested by the local machine, and print the process name/ID/domain |
+| spf/kapp/pkttest | send test packets |
 | spf/drivers/snull | Simple network device driver |
 

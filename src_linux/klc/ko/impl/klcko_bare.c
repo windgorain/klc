@@ -95,12 +95,15 @@ static int _mybpf_bare_check(MYBPF_BARE_HDR_S *hdr, int mem_len, const void **tm
 
 static void * _mybpf_bare_alloc(int size)
 {
-    void * (*jit_alloc)(int)= KLCKO_GetKV(KLC_KV_JIT_ALLOC);
+    void * (*execm_alloc)(int, int);
+    void * (*jit_alloc)(int);
+
+    jit_alloc = KLCKO_GetKV(KLC_KV_JIT_ALLOC);
     if (jit_alloc) {
         return jit_alloc(size);
     }
 
-    void * (*execm_alloc)(int, int)= KLCKO_GetKV(KLC_KV_EXECMEM_ALLOC);
+    execm_alloc = KLCKO_GetKV(KLC_KV_EXECMEM_ALLOC);
     if (execm_alloc) {
         return execm_alloc(3, size);
     }
@@ -133,7 +136,9 @@ static int _mybpf_bare_make_exe(void *fn, int pages)
 
     vm = func3(fn);
     if (vm) {
+#ifdef VM_FLUSH_RESET_PERMS
 		vm->flags |= VM_FLUSH_RESET_PERMS;
+#endif
     }
 
     ret = func1(fn, pages);

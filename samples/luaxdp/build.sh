@@ -2,8 +2,8 @@
 gcc -O2 -I ../../h *_user.c -lbpf -o luaxdp
 cp luaxdp ../../bin/samples/
 
-if [ "$(clang -dumpversion | cut -d. -f1)" -lt 18 ]; then
-    echo "Need clang version >= 18"
+if [ "$(clang -dumpversion | cut -d. -f1)" -lt 20 ]; then
+    echo "Need clang version >= 20"
     exit 1
 fi
 

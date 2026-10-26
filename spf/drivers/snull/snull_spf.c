@@ -31,7 +31,7 @@ static int _snull_stop(void *dev)
 
 static int _snull_xmit(void *skb, void *dev)
 {
-    klc_free_skb(skb);
+    kfree_skb(skb);
     return 0;
 }
 
