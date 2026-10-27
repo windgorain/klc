@@ -13,6 +13,7 @@ static KUTL_MODINIT_S g_klcko_oscomp_init[] = {
     {.name="inlineskb", .init=KlcKoInline_InitSkb, .fini=NULL},
     {.name="inlinenetdev", .init=KlcKoInline_InitNetdev, .fini=NULL},
     {.name="inlinebottomhalf", .init=KlcKoInline_InitBottomHalf, .fini=NULL},
+    {.name="inlinerefcount", .init=KlcKoInline_InitRefcount, .fini=NULL},
     {.name=NULL}
 };
 

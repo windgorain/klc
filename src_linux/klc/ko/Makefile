@@ -14,6 +14,7 @@ klc_oscomp-objs := oscomp/klcko_oscomp_init.o \
                    oscomp/klcko_inline_bottom_half.o \
                    oscomp/klcko_inline_skb.o \
                    oscomp/klcko_inline_netdev.o \
+                   oscomp/klcko_inline_refcount.o \
                    oscomp/klcko_inline.o
 
 klc_impl-objs := impl/klcko_impl_init.o \

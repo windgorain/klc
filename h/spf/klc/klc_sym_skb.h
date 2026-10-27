@@ -228,9 +228,9 @@ static inline void klc_skb_add_users(struct sk_buff *skb, int val)
         return;
     }
 
-    int *ptr = (void*)skb + info->users_off;
+    void *ptr = (void*)skb + info->users_off;
 
-    __sync_fetch_and_add(ptr, val);
+    refcount_add(val, ptr);
 }
 
 static inline U8 klc_skb_get_ip_summed(struct sk_buff *skb)

@@ -18,7 +18,8 @@ quit_process() {
 
 trap quit_process INT
 
-echo "按 Ctrl+C 退出"
+echo "test: curl --ipv4 https://www.baidu.com"
+echo "Press Ctrl+C to quit"
 
 cat /sys/kernel/debug/tracing/trace_pipe
 

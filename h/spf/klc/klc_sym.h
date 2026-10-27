@@ -13,6 +13,7 @@
 #include "klc_sym_gen.h"
 #include "klc_sym_pid.h"
 #include "klc_sym_netns.h"
+#include "klc_sym_refcount.h"
 #include "klc_sym_skb.h"
 #include "klc_sym_sock.h"
 #include "klc_sym_ipoutput.h"
