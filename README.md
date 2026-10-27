@@ -46,6 +46,19 @@ sudo ./spf/kapp/http_sniffer_load.sh
 #Monitor SSL requested by the local machine, and print out the process name/PID/domain
 sudo ./spf/kapp/sni_sniffer_load.sh
 
+#load kernel pktgen
+sudo ./klctool load spf spf/kapp/pktgen.o -r
+#set destination MAC address
+./klctool run pktgen dmac 01:02:03:04:05:06
+#start, eg: interface eth0, 4 workers
+./klctool run pktgen start eth0 4
+#Set burst, eg: 256
+./klctool run pktgen burst 256
+#Show status
+./klctool run pktgen show
+#Stop
+./klctool run pktgen stop
+
 #Driver Example
 sudo ./klctool load spf drivers/snull.o
 sudo ./klctool load spf drivers/snull.o -i snull2

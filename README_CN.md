@@ -50,6 +50,19 @@ sudo ./spf/kapp/http_sniffer_load.sh
 #监控本机请求的SSL域名, 并将进程名/进程号/域名打印出来 
 sudo ./spf/kapp/sni_sniffer_load.sh
 
+#内核发送测试报文 
+sudo ./klctool load spf spf/kapp/pktgen.o -r
+#设置目标MAC地址 
+./klctool run pktgen dmac 01:02:03:04:05:06
+#开启测试, 例如: 发包接口配置为eth0, 4个发包线程 
+./klctool run pktgen start eth0 4
+#设置Burst以提高发包性能, 例如设置为256 
+./klctool run pktgen burst 256
+#显示状态 
+./klctool run pktgen show
+#停止发包 
+./klctool run pktgen stop
+
 #驱动示例
 sudo ./klctool load spf drivers/snull.o
 sudo ./klctool load spf drivers/snull.o -i snull2
