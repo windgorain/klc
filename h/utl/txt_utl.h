@@ -8,14 +8,12 @@
 #ifndef __UTL_TXT_H_
 #define __UTL_TXT_H_
 
+#include "utl/txt_def.h"
 #include "utl/sprintf_utl.h"
 
 #ifdef __cplusplus
     extern "C" {
 #endif 
-
-
-#define TXT_STRING_ARRAY(_x, _v) _x[] = _v; _x[sizeof(_v) - 1] = '\0'
 
 
 #define TXT_CONST_STRCMP(name, str)  ({ \
@@ -276,11 +274,11 @@ char * TXT_Num2BitString(U64 v, int min_len, OUT char *str);
 #define TXT_SCAN_ELEMENT_STOP()   {if (_pcChanged != NULL){*_pcChanged = _cSaved;}}
 #define TXT_SCAN_ELEMENT_END()    }TXT_SCAN_ELEMENT_STOP()}while(_pc != NULL);}while(0)
 
-#ifdef strlcpy
-#undef strlcpy
-#endif
-
+#ifndef IN_ULC_USER
+#ifndef strlcpy 
 #define strlcpy TXT_Strlcpy
+#endif
+#endif
 
 #ifdef __cplusplus
     }

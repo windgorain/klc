@@ -19,14 +19,14 @@ static SNIFFER_PORTS_S g_http_sniffer_ports;
 
 static int _http_sniffer_get_host(void *payload, void *payload_end, OUT LSTR_S *host)
 {
-    void * host_begin = _strnstr(payload, "\r\nHost:", payload_end - payload);
+    void * host_begin = strnstr(payload, "\r\nHost:", payload_end - payload);
     if (! host_begin) {
         return -1;
     }
     
     host_begin += 2;
 
-    void * host_end = _strnstr(host_begin, "\r\n", payload_end - host_begin);
+    void * host_end = strnstr(host_begin, "\r\n", payload_end - host_begin);
     if (! host_end) {
         return -1;
     }

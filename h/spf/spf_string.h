@@ -11,14 +11,17 @@
 extern "C" {
 #endif
 
-#define memset _memset
-#define memcmp _memcmp
-#define memcpy _memcpy
-#define strlen _strlen
-#define strnstr _strnstr
-#define strcmp _strcmp
-#define atol _atol
-#define atoi _atoi
+#define memset _spf_memset
+#define memcmp _spf_memcmp
+#define memcpy _spf_memcpy
+#define strlen _spf_strlen
+#define strnlen _spf_strnlen
+#define strnstr _spf_strnstr
+#define strcmp _spf_strcmp
+#define strlcpy _spf_strlcpy
+#define strscpy _spf_strscpy
+#define atol _spf_atol
+#define atoi _spf_atoi
 
 static inline void * memset(void *s, int c, size_t count)
 {
@@ -58,6 +61,11 @@ static inline size_t strlen(const char *s)
 	return sc - s;
 }
 
+static inline size_t strnlen(const char *a, size_t max_len)
+{
+    const char *end = memchr(a, '\0', max_len);
+    return end ? end - (char*)a : max_len;
+}
 static inline char *strnstr(const char *s1, const char *s2, size_t len)
 {
 	size_t l2;
@@ -67,7 +75,7 @@ static inline char *strnstr(const char *s1, const char *s2, size_t len)
 		return (char *)s1;
 	while (len >= l2) {
 		len--;
-		if (!_memcmp(s1, s2, l2))
+		if (!_spf_memcmp(s1, s2, l2))
 			return (char *)s1;
 		s1++;
 	}
@@ -113,6 +121,30 @@ static inline long atol(const char *s)
 static inline int atoi(const char *s)
 {
 	return atol(s);
+}
+static inline size_t strlcpy(char *dst, const char *src, size_t size)
+{
+    unsigned long n;
+    char *p;
+    for (p = dst, n = 0; n + 1 < size && *src!= '\0';  ++p, ++src, ++n) {
+        *p = *src;
+    }
+    *p = '\0';
+    if(*src == '\0') {
+        return n;
+    } else {
+        return n + strlen(src);
+    }
+}
+static inline long strscpy(char *dst, const char *src, size_t count)
+{
+	size_t len;
+	if (count == 0)
+		return -1;
+	len = strnlen(src, count - 1);
+	memcpy(dst, src, len);
+	dst[len] = '\0';
+	return src[len] ? -1: len;
 }
 #ifdef __cplusplus
 }

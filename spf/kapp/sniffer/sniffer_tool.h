@@ -24,7 +24,7 @@ static inline void _sniffer_print(LSTR_S *str, int dir)
 
     int copy_len = MIN(sizeof(info)-1, str->uiLen);
 
-    _memcpy(info, str->pcData, copy_len);
+    _spf_memcpy(info, str->pcData, copy_len);
 
     char *dir_str = dir == DIR_IN ? "Input" : "Output";
     BPF_Print("%s: %s", dir_str, info);

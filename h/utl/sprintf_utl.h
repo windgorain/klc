@@ -37,7 +37,9 @@ typedef struct {
 
 INT BS_Printf(const char *fmt, ...);
 INT BS_Sprintf(char * buf, const char *fmt, ...);
+#ifndef BS_Snprintf
 INT BS_Snprintf(char * buf, IN INT iLen, const char *fmt, ...);
+#endif
 int BS_Vsnprintf(char *buf, size_t size, const char *fmt, va_list args);
 int BS_Scnprintf(char *buf, int size, const char *fmt, ...);
 

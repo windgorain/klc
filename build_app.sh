@@ -1,34 +1,39 @@
 #!/bin/bash
 
+if [ "$(clang -dumpversion | cut -d. -f1)" -lt 20 ]; then
+    echo "Need clang version >= 20"
+    exit 1
+fi
+
 cd samples/hello_world
-./build.sh
+make
 cd - > /dev/null
 
 cd samples/klcfunc
-./build.sh
+make
 cd - > /dev/null
 
 cd samples/tcp_echo
-./build.sh
+make
 cd - > /dev/null
 
 cd samples/klua
-./build.sh
+make
 cd - > /dev/null
 
 cd samples/luaxdp
-./build.sh
+make
 cd - > /dev/null
 
 cd spf/kapp/sniffer
-./build.sh
+make
 cd - > /dev/null
 
-cd spf/kapp/pkttest
-./build.sh
+cd spf/kapp/pktgen
+make
 cd - > /dev/null
 
 cd spf/drivers/snull
-./build.sh
+make
 cd - > /dev/null
 

@@ -8,42 +8,59 @@
 #include "bpf/tcp_bpf.h"
 #include "bpf/udp_bpf.h"
 #include "bpf/ipcsum_bpf.h"
-#include "spf/spf_string.h"
 #include "spf/core/spf_module.h"
 #include "spf/klc/klc_sym.h"
 #include "utl/array_bit_opt.h"
 #include "utl/eth_utl.h"
 
-static char g_pkttest_dev_name[IFNAMSIZ];
-static int g_pkttest_running = 0;
-static U32 g_pkttest_burst = 64;
-static U8 g_pkttest_dst_mac[MAC_ADDR_LEN];
-static void *g_pkttest_task;
-static void *g_pkttest_skb;
+#define PKTGEN_BURST_DFT 16
 
-static void _pkttest_cmd_help(char *buf, int buf_size)
+typedef struct {
+    U32 woker_id;
+    void *task;
+    void *skb;
+    void *dev;
+}PKTGEN_S;
+
+static char g_pktgen_dev_name[IFNAMSIZ];
+static U8 g_pktgen_dst_mac[MAC_ADDR_LEN];
+static U32 g_pktgen_burst = PKTGEN_BURST_DFT;
+static int g_pktgen_worker_num;
+static PKTGEN_S g_pktgen_workers[8];
+static KLC_NETDEV_INFO_S g_pktgen_devinfo;
+
+static void _pktgen_cmd_help(char *buf, int buf_size)
 {
     snprintf(buf, buf_size, "Usage:\n"
             " show\n"
-            " start DEV\n"
+            " start DEV [WorkerNum]\n"
             " stop\n"
             " burst COUNT\n"
             " dmac MAC\n");
 }
 
-static struct sk_buff * _pkttest_alloc_skb(void)
+static PKTGEN_S * _pktgen_get_worker(U32 index)
+{
+    if (index > ARRAY_SIZE(g_pktgen_workers)) {
+        return NULL;
+    }
+
+    return &g_pktgen_workers[index];
+}
+
+static struct sk_buff * _pktgen_alloc_skb(void)
 {
     return klc_create_skb(1024, KLC_GFP_KERNEL);
 }
 
-static struct sk_buff * _pkttest_fill_packet_ipv4(struct net_device *dev, KLC_NETDEV_INFO_S *dev_info)
+static struct sk_buff * _pktgen_fill_packet_ipv4(struct net_device *dev, KLC_NETDEV_INFO_S *dev_info)
 {
     int skb_len = 0;
     int ip_len;
     int udp_len;
     int data_len = 18; 
 
-    struct sk_buff *skb = _pkttest_alloc_skb();
+    struct sk_buff *skb = _pktgen_alloc_skb();
     if (! skb) {
         return NULL;
     }
@@ -53,7 +70,7 @@ static struct sk_buff * _pkttest_fill_packet_ipv4(struct net_device *dev, KLC_NE
 	skb_reset_mac_header(skb);  
 
     memcpy(eth->stSMac.aucMac, dev_info->dev_addr, MAC_ADDR_LEN);
-    memcpy(eth->stDMac.aucMac, g_pkttest_dst_mac, MAC_ADDR_LEN);
+    memcpy(eth->stDMac.aucMac, g_pktgen_dst_mac, MAC_ADDR_LEN);
     eth->usProto = htons(ETH_P_IP);
 
     skb_set_network_header(skb, 14); 
@@ -85,35 +102,33 @@ static struct sk_buff * _pkttest_fill_packet_ipv4(struct net_device *dev, KLC_NE
     return skb;
 }
 
-static void _pkttest_xmit(struct net_device *dev, KLC_NETDEV_INFO_S *dev_info)
+static void _pktgen_xmit(PKTGEN_S *w, KLC_NETDEV_INFO_S *dev_info)
 {
-    int que_index = 0;
-    struct sk_buff *skb = g_pkttest_skb;
+    struct sk_buff *skb = w->skb;
 
-    g_pkttest_skb = NULL;
+    w->skb = NULL;
 
     if (! skb) {
-        skb = _pkttest_fill_packet_ipv4(dev, dev_info);
+        skb = _pktgen_fill_packet_ipv4(w->dev, dev_info);
         if (! skb) { 
             return;
         }
     }
 
-    int cur_index = que_index % dev_info->real_num_tx_queues;
-    que_index ++;
+    int que_index = w->woker_id % dev_info->real_num_tx_queues;
 
-    struct netdev_queue *txq = netdev_get_tx_queue(dev, cur_index);
+    struct netdev_queue *txq = netdev_get_tx_queue(w->dev, que_index);
 
-    int burst = g_pkttest_burst;
+    int burst = g_pktgen_burst;
     klc_skb_add_users(skb, burst);
 
     local_bh_disable();
-    klc_hard_tx_lock(dev, txq);
+    klc_hard_tx_lock(w->dev, txq);
 
     int busy = 0;
 
     while ((burst > 0) && (! netif_xmit_frozen_or_drv_stopped(txq))) {
-        int ret = netdev_start_xmit(skb, dev, txq, --burst > 0);
+        int ret = netdev_start_xmit(skb, w->dev, txq, --burst > 0);
         if (! dev_xmit_complete(ret)) {
             klc_skb_add_users(skb, -1);
             busy = 1;
@@ -128,27 +143,23 @@ static void _pkttest_xmit(struct net_device *dev, KLC_NETDEV_INFO_S *dev_info)
         klc_skb_add_users(skb, -burst);
     }
 
-    klc_hard_tx_unlock(dev, txq);
+    klc_hard_tx_unlock(w->dev, txq);
     local_bh_enable();
 
     if (busy) {
-        ulc_sys_usleep(10000); 
-        g_pkttest_skb = skb;
-        printf("pkttest busy\n");
+        w->skb = skb;
+
     } else {
         kfree_skb(skb);
     }
 }
 
-static int _pkttest_worker(void *data)
+static int _pktgen_worker(void *data)
 {
-    KLC_NETDEV_INFO_S dev_info;
-    struct net_device *dev = data;
-
-    klc_netdev_get_info(dev, &dev_info);
+    PKTGEN_S *w = data;
 
     while (! kthread_should_stop()) {
-        _pkttest_xmit(dev, &dev_info);
+        _pktgen_xmit(w, &g_pktgen_devinfo);
 		if (need_resched()) {
             schedule();
         }
@@ -156,14 +167,33 @@ static int _pkttest_worker(void *data)
 		try_to_freeze();
     }
 
-    g_pkttest_running = 0;
+    w->task = NULL;
 
     return 0;
 }
 
-static int _pkttest_start(int argc, char **argv, char *output_buf, int buf_size)
+static int _pktgen_parse_worker_num(int argc, char **argv)
+{
+    if (argc < 4) {
+        return 1;
+    }
+
+    int worker_num = atoi(argv[3]);
+    if (worker_num <= 0) {
+        return 1;
+    }
+
+    if (worker_num > ARRAY_SIZE(g_pktgen_workers)) {
+        return ARRAY_SIZE(g_pktgen_workers);
+    }
+
+    return worker_num;
+}
+
+static int _pktgen_start(int argc, char **argv, char *output_buf, int buf_size)
 {
     char *dev_name = argv[2];
+    int worker_num = _pktgen_parse_worker_num(argc, argv);
 
     struct net *inet = get_init_net();
     if (! inet) {
@@ -177,39 +207,46 @@ static int _pkttest_start(int argc, char **argv, char *output_buf, int buf_size)
         return -1;
     }
 
-    g_pkttest_running = 1;
+    klc_netdev_get_info(dev, &g_pktgen_devinfo);
 
-    struct task_struct *task = kthread_create(_pkttest_worker, dev, "pkttest");
-    if (! task) {
-        g_pkttest_running = 0;
-        dev_put(dev);
-        snprintf(output_buf, buf_size, "Can't create thread\n");
-        return -1;
+    strlcpy(g_pktgen_dev_name, dev_name, sizeof(g_pktgen_dev_name));
+
+    g_pktgen_worker_num = 0;
+
+    for (int i=0; i<worker_num; i++) {
+        PKTGEN_S *w = _pktgen_get_worker(i);
+        char worker_name[12];
+        snprintf(worker_name, sizeof(worker_name), "pktgen%u", i+1);
+        w->dev = dev;
+        w->woker_id = i;
+        w->task = kthread_create(_pktgen_worker, w, worker_name);
+        if (! w->task) {
+            snprintf(output_buf, buf_size, "Can't create worker %s\n", worker_name);
+            break;
+        }
+        g_pktgen_worker_num ++;
+        wake_up_process(w->task);
     }
-
-    g_pkttest_task = task;
-
-    strlcpy(g_pkttest_dev_name, dev_name, sizeof(g_pkttest_dev_name));
-
-    wake_up_process(task);
 
     return 0;
 }
 
-static int _pkttest_stop(void)
+static int _pktgen_stop(void)
 {
-    if (! g_pkttest_running) {
-        return 0;
-    }
+    int i;
 
-    if (g_pkttest_task) {
-        kthread_stop(g_pkttest_task); 
+    for (i=0; i<ARRAY_SIZE(g_pktgen_workers); i++) {
+        PKTGEN_S *w = _pktgen_get_worker(i);
+        void *task = w->task;
+        if (task) {
+            kthread_stop(task); 
+        }
     }
 
     return 0;
 }
 
-static int _pkttest_set_dst_mac(int argc, char **argv, char *output_buf, int buf_size)
+static int _pktgen_set_dst_mac(int argc, char **argv, char *output_buf, int buf_size)
 {
     char *dst_mac_str = argv[2];
     U8 mac[MAC_ADDR_LEN];
@@ -219,76 +256,76 @@ static int _pkttest_set_dst_mac(int argc, char **argv, char *output_buf, int buf
         return -1;
     }
 
-    memcpy(g_pkttest_dst_mac, mac, MAC_ADDR_LEN);
+    memcpy(g_pktgen_dst_mac, mac, MAC_ADDR_LEN);
 
     return 0;
 }
 
 
-static int _pkttest_set_burst(int argc, char **argv, char *output_buf, int buf_size)
+static int _pktgen_set_burst(int argc, char **argv, char *output_buf, int buf_size)
 {
     char *brust_str = argv[2];
     int burst;
 
     burst = atoi(brust_str);
     if (! burst) {
-        burst = 128;
+        burst = PKTGEN_BURST_DFT;
     }
 
-    g_pkttest_burst = burst;
+    g_pktgen_burst = burst;
 
     return 0;
 }
 
-static void _pkttest_show(OUT char *buf, int buf_size)
+static void _pktgen_show(OUT char *buf, int buf_size)
 {
     char mac_string[ETH_MAC_ADDR_STRING_LEN + 1];
 
     snprintf(buf, buf_size,
-            " Running: %u\n"
+            " Worker: %u\n"
             " Dev: %s\n"
             " DMac: %s\n"
             " Burst: %u\n",
-            g_pkttest_running,
-            g_pkttest_dev_name,
-            ETH_Mac2String(g_pkttest_dst_mac, ':', mac_string),
-            g_pkttest_burst
+            g_pktgen_worker_num,
+            g_pktgen_dev_name,
+            ETH_Mac2String(g_pktgen_dst_mac, ':', mac_string),
+            g_pktgen_burst
             );
 }
 
-static int _pkttest_event_init(void)
+static int _pktgen_event_init(void)
 {
     return 0;
 }
 
-static int _pkttest_event_fin1(void)
+static int _pktgen_event_fin1(void)
 {
-    _pkttest_stop();
+    _pktgen_stop();
     return 0;
 }
 
 SEC(".spf.cmd/cmd_main")
-static int _pkttest_cmd_main(int argc, char **argv, char *output_buf, int buf_size)
+static int _pktgen_cmd_main(int argc, char **argv, char *output_buf, int buf_size)
 {
     int ret = 0;
 
     if (argc < 2) {
-        _pkttest_cmd_help(output_buf, buf_size);
+        _pktgen_cmd_help(output_buf, buf_size);
         return -1;
     }
 
     if (strcmp(argv[1], "show")== 0) {
-        _pkttest_show(output_buf, buf_size);
+        _pktgen_show(output_buf, buf_size);
     } else if ((strcmp(argv[1], "start")== 0) && (argc >= 3)) {
-        ret = _pkttest_start(argc, argv, output_buf, buf_size);
+        ret = _pktgen_start(argc, argv, output_buf, buf_size);
     } else if (strcmp(argv[1], "stop")== 0) {
-        _pkttest_stop();
+        _pktgen_stop();
     } else if ((strcmp(argv[1], "dmac")== 0) && (argc >= 3)) {
-        ret = _pkttest_set_dst_mac(argc, argv, output_buf, buf_size);
+        ret = _pktgen_set_dst_mac(argc, argv, output_buf, buf_size);
     } else if ((strcmp(argv[1], "burst")== 0) && (argc >= 3)) {
-        ret = _pkttest_set_burst(argc, argv, output_buf, buf_size);
+        ret = _pktgen_set_burst(argc, argv, output_buf, buf_size);
     } else {
-        _pkttest_cmd_help(output_buf, buf_size);
+        _pktgen_cmd_help(output_buf, buf_size);
         return -1;
     }
 
@@ -299,8 +336,8 @@ SEC(SPF_SEC_EVENT)
 int event(U32 event)
 {
     switch (event) {
-        case SPF_EVENT_INIT: return _pkttest_event_init();
-        case SPF_EVENT_FIN1: return _pkttest_event_fin1();
+        case SPF_EVENT_INIT: return _pktgen_event_init();
+        case SPF_EVENT_FIN1: return _pktgen_event_fin1();
     }
     return 0;
 }
