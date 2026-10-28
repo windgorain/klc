@@ -57,15 +57,11 @@ static inline int ETH_String2Mac(IN char *mac_string, OUT U8 *mac)
     char *pcString = mac_string;
     U8 *pucChar;
 
-    if (strlen(pcString) < ETH_MAC_ADDR_STRING_LEN) {
-        return BS_BAD_PARA;
-    }
-
     pucChar= mac;
     
     for (i=0; i<MAC_ADDR_LEN; i++) {    
-        if (i != 0) {
-            pcString ++;
+        if ((pcString[0] == '\0') || (pcString[1] == '\0')) {
+            return BS_ERR;
         }
 
         if (BS_OK != HEX_2_UCHAR(pcString, pucChar)) {
@@ -73,6 +69,11 @@ static inline int ETH_String2Mac(IN char *mac_string, OUT U8 *mac)
         }
 
         pcString += 2;
+
+        if (*pcString != '\0') {
+            pcString ++; 
+        }
+
         pucChar ++;
     }
 

@@ -7,22 +7,22 @@
 #define _ULC_USER_H
 
 #define IN_ULC_USER
+#define USE_ULC_STDIO
 
 #ifdef IN_ULC_USER
 
-#include <string.h>
 #include "utl/int_types.h"
 #include "utl/types.h"
 #include "utl/types_utl.h"
 #include "utl/bpf_helper_utl.h"
 #include "utl/int_types.h"
-#include "utl/txt_utl.h"
 #include "utl/ulc_def.h"
 #include "utl/ulc_user_def.h"
 #include "utl/ulc_user_stdio.h"
 #include "utl/ulc_user_base.h"
 #include "utl/ulc_user_sys.h"
 #include "utl/ulc_user_user.h"
+#include "utl/txt_utl.h"
 #include "utl/mybpf_spf_sec.h"
 #include "utl/mybpf_map_def.h"
 

@@ -2,7 +2,7 @@
 * Copyright (C), Xingang.Li
 * Author: Xingang.Li  Version: 1.0
 * Date: 2026-10-20
-* Description: pkt test: 发送测试报文
+* Description: pktgen: 发送测试报文
 ******************************************************************************/
 #include "utl/ulc_user.h"
 #include "bpf/tcp_bpf.h"
@@ -26,7 +26,7 @@ static char g_pktgen_dev_name[IFNAMSIZ];
 static U8 g_pktgen_dst_mac[MAC_ADDR_LEN];
 static U32 g_pktgen_burst = PKTGEN_BURST_DFT;
 static int g_pktgen_worker_num;
-static PKTGEN_S g_pktgen_workers[8];
+static PKTGEN_S g_pktgen_workers[32];
 static KLC_NETDEV_INFO_S g_pktgen_devinfo;
 
 static void _pktgen_cmd_help(char *buf, int buf_size)

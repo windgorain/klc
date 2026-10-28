@@ -14,6 +14,7 @@ extern "C" {
 #define memset _spf_memset
 #define memcmp _spf_memcmp
 #define memcpy _spf_memcpy
+#define memchr _spf_memchr
 #define strlen _spf_strlen
 #define strnlen _spf_strnlen
 #define strnstr _spf_strnstr
@@ -50,6 +51,17 @@ static inline void * memcpy(void *dest, const void *src, size_t count)
 	while (count--)
 		*tmp++ = *s++;
 	return dest;
+}
+
+void * memchr(const void *s, int c, size_t n)
+{
+	const unsigned char *p = s;
+	while (n-- != 0) {
+        	if ((unsigned char)c == *p++) {
+			return (void *)(p - 1);
+		}
+	}
+	return NULL;
 }
 
 static inline size_t strlen(const char *s)

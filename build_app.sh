@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [ "$(clang -dumpversion | cut -d. -f1)" -lt 20 ]; then
-    echo "Need clang version >= 20"
+if [ "$(clang -dumpversion | cut -d. -f1)" -lt 19 ]; then
+    echo "Need clang version >= 19"
     exit 1
 fi
 

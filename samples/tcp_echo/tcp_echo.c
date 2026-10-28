@@ -3,10 +3,6 @@
 * Author:      Xingang.Li  Version: 1.0
 * Description:
 ******************************************************************************/
-#include <pthread.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <fcntl.h>
 #include "utl/ulc_user.h"
 #include "spf/spf_string.h"
 #include "spf/core/spf_module.h"

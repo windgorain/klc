@@ -6,7 +6,6 @@ USR_TARGETS = ${USR_SOURCES:.c=}
 
 CFLAGS := -O2 -target bpf \
           -I $(KLC_DIR)/h \
-          -I /usr/include/aarch64-linux-gnu \
           -fno-builtin-memset \
           -fno-builtin-memmove \
           -fno-builtin-memcpy \
