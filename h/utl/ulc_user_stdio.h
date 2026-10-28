@@ -126,6 +126,7 @@ enum nf_inet_hooks {
 
 typedef unsigned long size_t;
 typedef struct FILE  FILE;
+typedef long jmp_buf[32];
 
 extern int printf(const char *format, ...);
 extern int sprintf(char *str, const char *format, ...);
@@ -138,6 +139,7 @@ extern int atoi(const char *nptr);
 extern unsigned long long strtoull(const char *nptr, char **endptr, int base);
 extern void abort(void);
 extern unsigned int inet_addr(const char *cp);
+extern void *memset(void *s, int c, size_t count);
 
 #endif
 
