@@ -13,7 +13,7 @@
 #include "utl/array_bit_opt.h"
 #include "utl/eth_utl.h"
 
-#define PKTGEN_BURST_DFT 16
+#define PKTGEN_BURST_DFT 1
 
 typedef struct {
     U32 woker_id;
@@ -35,7 +35,7 @@ static void _pktgen_cmd_help(char *buf, int buf_size)
             " show\n"
             " start DEV [WorkerNum]\n"
             " stop\n"
-            " burst COUNT\n"
+            " burst COUNT (some driver maybe crash when COUNT > 1)\n"
             " dmac MAC\n");
 }
 
@@ -120,7 +120,15 @@ static void _pktgen_xmit(PKTGEN_S *w, KLC_NETDEV_INFO_S *dev_info)
     struct netdev_queue *txq = netdev_get_tx_queue(w->dev, que_index);
 
     int burst = g_pktgen_burst;
-    klc_skb_add_users(skb, burst);
+    int share_skb = 0;
+
+    if (burst > 1) {
+        if (klc_skb_add_users(skb, burst) < 0) {
+            burst = 1;
+        } else {
+            share_skb = 1;
+        }
+    }
 
     local_bh_disable();
     klc_hard_tx_lock(w->dev, txq);
@@ -130,7 +138,9 @@ static void _pktgen_xmit(PKTGEN_S *w, KLC_NETDEV_INFO_S *dev_info)
     while ((burst > 0) && (! netif_xmit_frozen_or_drv_stopped(txq))) {
         int ret = netdev_start_xmit(skb, w->dev, txq, --burst > 0);
         if (! dev_xmit_complete(ret)) {
-            klc_skb_add_users(skb, -1);
+            if (share_skb) {
+                klc_skb_add_users(skb, -1);
+            }
             busy = 1;
             break;
         }
@@ -139,7 +149,7 @@ static void _pktgen_xmit(PKTGEN_S *w, KLC_NETDEV_INFO_S *dev_info)
         }
     }
 
-    if (unlikely(burst)) {
+    if (share_skb && (burst > 0)) {
         klc_skb_add_users(skb, -burst);
     }
 
@@ -148,8 +158,7 @@ static void _pktgen_xmit(PKTGEN_S *w, KLC_NETDEV_INFO_S *dev_info)
 
     if (busy) {
         w->skb = skb;
-
-    } else {
+    } else if (share_skb) {
         kfree_skb(skb);
     }
 }

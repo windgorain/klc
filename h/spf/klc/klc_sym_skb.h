@@ -221,16 +221,18 @@ static inline U16 klc_skb_protocol(struct sk_buff *skb)
 }
 
 
-static inline void klc_skb_add_users(struct sk_buff *skb, int val)
+static inline int klc_skb_add_users(struct sk_buff *skb, int val)
 {
     KLC_SKB_STRUCT_INFO_S *info = klc_get_skb_struct_info();
     if (! info) {
-        return;
+        return -1;
     }
 
     void *ptr = (void*)skb + info->users_off;
 
     refcount_add(val, ptr);
+
+    return 0;
 }
 
 static inline U8 klc_skb_get_ip_summed(struct sk_buff *skb)
