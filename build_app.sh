@@ -33,6 +33,10 @@ cd spf/kapp/pktgen
 make
 cd - > /dev/null
 
+cd spf/kapp/dnsblock
+make
+cd - > /dev/null
+
 cd spf/drivers/snull
 make
 cd - > /dev/null

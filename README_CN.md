@@ -63,6 +63,15 @@ sudo ./klctool load spf spf/kapp/pktgen.o -r
 #停止发包 
 ./klctool run pktgen stop
 
+#DNS过滤
+sudo ./klctool load spf spf/kapp/dnsblock.o -r
+#添加规则
+./klctool run dnsblock add rule example.com
+#显示规则, 显示格式为"域名 : 匹配次数"
+./klctool run dnsblock show rule
+#删除规则
+./klctool run dnsblock del rule example.com
+
 #驱动示例
 sudo ./klctool load spf drivers/snull.o
 sudo ./klctool load spf drivers/snull.o -i snull2
@@ -83,5 +92,6 @@ cd -
 | samples/luaxdp | 在XDP程序中使用LUA |
 | spf/kapp/sniffer | 监控本机请求的HTTP域名, 并将进程名/进程号/域名打印出来 |
 | spf/kapp/pktgen | 内核发包工具 |
+| spf/kapp/dnsblock | DNS过滤 |
 | spf/drivers/snull | 简单的网络设备驱动 |
 

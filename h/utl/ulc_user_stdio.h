@@ -92,38 +92,6 @@ extern "C" {
 #define F_GETOWNER_UIDS 17
 #endif
 
-#ifndef NF_DROP 
-#define NF_DROP 0
-#define NF_ACCEPT 1
-#define NF_STOLEN 2
-#define NF_QUEUE 3
-#define NF_REPEAT 4
-#define NF_STOP 5	
-#define NF_MAX_VERDICT NF_STOP
-
-enum {
-	NFPROTO_UNSPEC =  0,
-	NFPROTO_INET   =  1,
-	NFPROTO_IPV4   =  2,
-	NFPROTO_ARP    =  3,
-	NFPROTO_NETDEV =  5,
-	NFPROTO_BRIDGE =  7,
-	NFPROTO_IPV6   = 10,
-	NFPROTO_DECNET = 12,
-	NFPROTO_NUMPROTO,
-};
-
-enum nf_inet_hooks {
-	NF_INET_PRE_ROUTING,
-	NF_INET_LOCAL_IN,
-	NF_INET_FORWARD,
-	NF_INET_LOCAL_OUT,
-	NF_INET_POST_ROUTING,
-	NF_INET_NUMHOOKS,
-	NF_INET_INGRESS = NF_INET_NUMHOOKS,
-};
-#endif
-
 typedef unsigned long size_t;
 typedef struct FILE  FILE;
 typedef long jmp_buf[32];

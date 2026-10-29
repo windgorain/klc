@@ -59,6 +59,15 @@ sudo ./klctool load spf spf/kapp/pktgen.o -r
 #Stop
 ./klctool run pktgen stop
 
+#DNS filter
+sudo ./klctool load spf spf/kapp/dnsblock.o -r
+#add rule
+./klctool run dnsblock add rule example.com
+#show rules, format: "domain-name : match-count"
+./klctool run dnsblock show rule
+#delete rule
+./klctool run dnsblock del rule example.com
+
 #Driver Example
 sudo ./klctool load spf drivers/snull.o
 sudo ./klctool load spf drivers/snull.o -i snull2

@@ -153,6 +153,27 @@ static inline int klc_skb_len(struct sk_buff *skb)
     return *ptr;
 }
 
+
+static inline int klc_skb_data_len(struct sk_buff *skb)
+{
+    KLC_SKB_STRUCT_INFO_S *info = klc_get_skb_struct_info();
+    if (! info) {
+        return 0;
+    }
+
+    unsigned int *ptr = (void*)skb + info->data_len_off;
+
+    return *ptr;
+}
+
+
+static inline int klc_skb_head_len(struct sk_buff *skb)
+{
+    int len = klc_skb_len(skb);
+    int data_len = klc_skb_data_len(skb);
+    return len - data_len;
+}
+
 static inline void * klc_skb_data(struct sk_buff *skb)
 {
     KLC_SKB_STRUCT_INFO_S *info = klc_get_skb_struct_info();
