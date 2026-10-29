@@ -62,6 +62,8 @@ sudo ./klctool load spf spf/kapp/pktgen.o -r
 ./klctool run pktgen show
 #停止发包 
 ./klctool run pktgen stop
+#卸载pktgen
+./klctool unload instance pktgen
 
 #DNS过滤
 sudo ./klctool load spf spf/kapp/dnsblock.o -r
@@ -71,6 +73,8 @@ sudo ./klctool load spf spf/kapp/dnsblock.o -r
 ./klctool run dnsblock show rule
 #删除规则
 ./klctool run dnsblock del rule example.com
+#卸载dnsblock
+./klctool unload instance dnsblock
 
 #驱动示例
 sudo ./klctool load spf drivers/snull.o

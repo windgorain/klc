@@ -52,12 +52,14 @@ sudo ./klctool load spf spf/kapp/pktgen.o -r
 ./klctool run pktgen dmac 01:02:03:04:05:06
 #start, eg: interface eth0, 4 workers
 ./klctool run pktgen start eth0 4
-#Set burst, eg: 256
+#set burst, eg: 256
 ./klctool run pktgen burst 256
-#Show status
+#show status
 ./klctool run pktgen show
-#Stop
+#stop
 ./klctool run pktgen stop
+#unload pktgen
+./klctool unload instance pktgen
 
 #DNS filter
 sudo ./klctool load spf spf/kapp/dnsblock.o -r
@@ -67,6 +69,8 @@ sudo ./klctool load spf spf/kapp/dnsblock.o -r
 ./klctool run dnsblock show rule
 #delete rule
 ./klctool run dnsblock del rule example.com
+#unload dnsblock
+./klctool unload instance dnsblock
 
 #Driver Example
 sudo ./klctool load spf drivers/snull.o
