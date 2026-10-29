@@ -13,6 +13,7 @@
 #include "utl/array_bit_opt.h"
 #include "utl/eth_utl.h"
 
+
 #define PKTGEN_BURST_DFT 1
 
 typedef struct {
@@ -218,6 +219,10 @@ static int _pktgen_start(int argc, char **argv, char *output_buf, int buf_size)
 
     klc_netdev_get_info(dev, &g_pktgen_devinfo);
 
+    if (! (g_pktgen_devinfo.priv_flags & IFF_TX_SKB_SHARING)) {
+        g_pktgen_burst = 1; 
+    }
+
     strlcpy(g_pktgen_dev_name, dev_name, sizeof(g_pktgen_dev_name));
 
     g_pktgen_worker_num = 0;
@@ -252,6 +257,8 @@ static int _pktgen_stop(void)
         }
     }
 
+    g_pktgen_worker_num = 0;
+
     return 0;
 }
 
@@ -279,6 +286,13 @@ static int _pktgen_set_burst(int argc, char **argv, char *output_buf, int buf_si
     burst = atoi(brust_str);
     if (! burst) {
         burst = PKTGEN_BURST_DFT;
+    }
+
+    if ((burst > 1) && (g_pktgen_worker_num)) {
+        if (! (g_pktgen_devinfo.priv_flags & IFF_TX_SKB_SHARING)) {
+            snprintf(output_buf, buf_size, "The device does not support skb share mode\n");
+            burst = 1; 
+        }
     }
 
     g_pktgen_burst = burst;

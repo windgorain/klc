@@ -441,6 +441,7 @@ int klc_netdev_get_info(U64 p1, U64 p2)
     struct net_device *dev = (void*)(long)p1;
     OUT KLC_NETDEV_INFO_S *info = (void*)(long)p2;
 
+    info->priv_flags = dev->priv_flags;
     info->real_num_tx_queues = dev->real_num_tx_queues;
     ether_addr_copy(info->dev_addr, dev->dev_addr);
 
@@ -549,6 +550,7 @@ void klc_hard_tx_unlock(U64 p1, U64 p2)
     void *txq = (void*)(long)p2;
     HARD_TX_UNLOCK(dev, txq);
 }
+
 int KlcKoFunc_Init(void)
 {
     return 0;

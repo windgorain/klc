@@ -91,6 +91,7 @@ typedef struct {
     unsigned char dev_addr[6]; 
     unsigned char reserved[2];
     unsigned int real_num_tx_queues; 
+    unsigned int priv_flags;
 }KLC_NETDEV_INFO_S;
 
 typedef struct {
