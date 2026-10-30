@@ -9,11 +9,12 @@
 #include "bpf/udp_bpf.h"
 #include "utl/dns_func.h"
 
-#define DNSBLOCK_DOMAIN_SIZE 128
+#define DNSBLOCK_DOMAIN_SIZE 256
 #define DNSBLOCK_RULE_MAX 1024
 
 typedef struct {
     U64 match_count;
+    U8 domain_len;
     char domain[DNSBLOCK_DOMAIN_SIZE];
 }DNSBLOCK_RULE_S;
 
@@ -39,13 +40,20 @@ static int _dnsblock_find_rule(char *domain)
     return -1;
 }
 
-static BOOL_T _dnsblock_match_rule(void *payload, void *data_end)
+static BOOL_T _dnsblock_match_rule(void *dns_name, void *data_end)
 {
-    int len = data_end - payload;
+    int data_len = data_end - dns_name;
+    void *dns_name_end = memchr(dns_name, '\0', data_len);
+    
+    if (! dns_name_end) {
+        return FALSE;
+    }
+
+    int dns_name_len = dns_name_end - dns_name;
 
     for (int i=0; i<g_dnsblock_rule_count; i++) {
         DNSBLOCK_RULE_S *r = &g_dnsblock_blacklist[i];
-        if (strnstr(payload, r->domain, len)) {
+        if ((dns_name_len >= r->domain_len) && (strstr(dns_name, r->domain))) {
             r->match_count ++;
             return TRUE;
         }
@@ -79,8 +87,9 @@ static unsigned int _dnsblock_nf_ipv4_pkt(void *skb)
     }
 
     void *payload = udphdr + 1;
+    void *dns_name = payload + DNS_HEAD_LEN;
 
-    if (_dnsblock_match_rule(payload, data_end)) {
+    if (_dnsblock_match_rule(dns_name, data_end)) {
         return NF_DROP;
     }
 
@@ -182,6 +191,7 @@ static int _dnsblock_add_rule(int argc, char **argv, char *buf, int buf_size)
 
     memcpy(r->domain, tmp, dns_len + 1);
     r->match_count = 0;
+    r->domain_len = dns_len;
 
     g_dnsblock_rule_count ++;
 
@@ -210,7 +220,7 @@ static int _dnsblock_del_rule(int argc, char **argv, char *buf, int buf_size)
 }
 
 SEC(".spf.cmd/cmd_main")
-static int _pktgen_cmd_main(int argc, char **argv, char *output_buf, int buf_size)
+static int _dnsblock_cmd_main(int argc, char **argv, char *output_buf, int buf_size)
 {
     int ret = 0;
 

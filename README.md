@@ -72,6 +72,19 @@ sudo ./klctool load spf spf/kapp/dnsblock.o -r
 #unload dnsblock
 ./klctool unload instance dnsblock
 
+#DNS Doctor
+sudo ./klctool load spf spf/kapp/dnsdoctor.o -r
+#set IP address
+./klctool run dnsdoctor ip 1.1.1.1
+#add rule
+./klctool run dnsdoctor add rule example.com
+#show rules, format: "domain-name : match-count"
+./klctool run dnsdoctor show rule
+#delte rule
+./klctool run dnsdoctor del rule example.com
+#unlaod dnsdoctor
+./klctool unload instance dnsdoctor
+
 #Driver Example
 sudo ./klctool load spf drivers/snull.o
 sudo ./klctool load spf drivers/snull.o -i snull2
@@ -92,5 +105,7 @@ cd -
 | samples/luaxdp | Use LUA in XDP programs |
 | spf/kapp/sniffer | Monitor HTTP requested by the local machine, and print the process name/ID/domain |
 | spf/kapp/pktgen | kernel sending packet tool |
+| spf/kapp/dnsblock | DNS Filter |
+| spf/kapp/dnsdoctor | Map a specific domain name to a specific IP address |
 | spf/drivers/snull | Simple network device driver |
 

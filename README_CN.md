@@ -76,6 +76,19 @@ sudo ./klctool load spf spf/kapp/dnsblock.o -r
 #卸载dnsblock
 ./klctool unload instance dnsblock
 
+#DNS Doctor, 将指定域名解析为指定IP地址
+sudo ./klctool load spf spf/kapp/dnsdoctor.o -r
+#设置IP地址
+./klctool run dnsdoctor ip 1.1.1.1
+#添加域名规则
+./klctool run dnsdoctor add rule example.com
+#显示规则, 显示格式为"域名 : 匹配次数"
+./klctool run dnsdoctor show rule
+#删除规则
+./klctool run dnsdoctor del rule example.com
+#卸载dnsdoctor
+./klctool unload instance dnsdoctor
+
 #驱动示例
 sudo ./klctool load spf drivers/snull.o
 sudo ./klctool load spf drivers/snull.o -i snull2
@@ -97,5 +110,6 @@ cd -
 | spf/kapp/sniffer | 监控本机请求的HTTP域名, 并将进程名/进程号/域名打印出来 |
 | spf/kapp/pktgen | 内核发包工具 |
 | spf/kapp/dnsblock | DNS过滤 |
+| spf/kapp/dnsdoctor | 将指定域名解析为指定IP地址 |
 | spf/drivers/snull | 简单的网络设备驱动 |
 

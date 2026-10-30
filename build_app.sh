@@ -37,6 +37,10 @@ cd spf/kapp/dnsblock
 make
 cd - > /dev/null
 
+cd spf/kapp/dnsdoctor
+make
+cd - > /dev/null
+
 cd spf/drivers/snull
 make
 cd - > /dev/null

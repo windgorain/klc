@@ -15,12 +15,17 @@ extern "C" {
 #define memcmp _spf_memcmp
 #define memcpy _spf_memcpy
 #define memchr _spf_memchr
+#define memmove _spf_memmove
 #define strlen _spf_strlen
 #define strnlen _spf_strnlen
 #define strnstr _spf_strnstr
+#define strstr _spf_strstr
 #define strcmp _spf_strcmp
+#define strncmp _spf_strncmp
+#define strcpy _spf_strcpy
 #define strlcpy _spf_strlcpy
 #define strscpy _spf_strscpy
+#define strspn _spf_strspn
 #define atol _spf_atol
 #define atoi _spf_atoi
 
@@ -55,13 +60,34 @@ static inline void * memcpy(void *dest, const void *src, size_t count)
 
 void * memchr(const void *s, int c, size_t n)
 {
-	const unsigned char *p = s;
-	while (n-- != 0) {
-        	if ((unsigned char)c == *p++) {
-			return (void *)(p - 1);
-		}
+    const unsigned char *p = s;
+    while (n-- != 0) {
+        if ((unsigned char)c == *p++) {
+            return (void *)(p - 1);
+        }
+    }
+    return NULL;
+}
+
+static inline void * memmove(void *dest, const void *src, size_t count)
+{
+	char *tmp;
+	const char *s;
+
+	if (dest <= src) {
+		tmp = dest;
+		s = src;
+		while (count--)
+			*tmp++ = *s++;
+	} else {
+		tmp = dest;
+		tmp += count;
+		s = src;
+		s += count;
+		while (count--)
+			*--tmp = *--s;
 	}
-	return NULL;
+	return dest;
 }
 
 static inline size_t strlen(const char *s)
@@ -78,6 +104,7 @@ static inline size_t strnlen(const char *a, size_t max_len)
     const char *end = memchr(a, '\0', max_len);
     return end ? end - (char*)a : max_len;
 }
+
 static inline char *strnstr(const char *s1, const char *s2, size_t len)
 {
 	size_t l2;
@@ -94,9 +121,28 @@ static inline char *strnstr(const char *s1, const char *s2, size_t len)
 	return NULL;
 }
 
+
+static inline char * strstr(const char *s1, const char *s2)
+{
+	size_t l1, l2;
+
+	l2 = strlen(s2);
+	if (!l2)
+		return (char *)s1;
+	l1 = strlen(s1);
+	while (l1 >= l2) {
+		l1--;
+		if (!memcmp(s1, s2, l2))
+			return (char *)s1;
+		s1++;
+	}
+	return NULL;
+}
+
 static inline int strcmp(const char *cs, const char *ct)
 {
 	unsigned char c1, c2;
+
 	while (1) {
 		c1 = *cs++;
 		c2 = *ct++;
@@ -106,6 +152,76 @@ static inline int strcmp(const char *cs, const char *ct)
 			break;
 	}
 	return 0;
+}
+
+static inline int strncmp(const char *cs, const char *ct, size_t count)
+{
+	unsigned char c1, c2;
+
+	while (count) {
+		c1 = *cs++;
+		c2 = *ct++;
+		if (c1 != c2)
+			return c1 < c2 ? -1 : 1;
+		if (!c1)
+			break;
+		count--;
+	}
+	return 0;
+}
+
+static inline size_t strspn(const char *s, const char *accept)
+{
+    const char *p;
+    const char *a;
+    size_t count = 0;
+
+    for (p = s; *p != '\0'; ++p) {
+        for (a = accept; *a != '\0'; ++a)
+            if (*p == *a)
+                break;
+        if (*a == '\0')
+            return count;
+        else
+            ++count;
+    }
+
+    return count;
+}
+
+static inline char *strcpy(char *dst, const char *src)
+{
+	char *ret = dst;
+	while ((*dst++ = *src++));
+	return ret;
+}
+
+static inline size_t strlcpy(char *dst, const char *src, size_t size)
+{
+    unsigned long n;
+    char *p;
+
+    for (p = dst, n = 0; n + 1 < size && *src!= '\0';  ++p, ++src, ++n) {
+        *p = *src;
+    }
+    *p = '\0';
+    if(*src == '\0') {
+        return n;
+    } else {
+        return n + strlen(src);
+    }
+}
+
+static inline long strscpy(char *dst, const char *src, size_t count)
+{
+	size_t len;
+
+	if (count == 0)
+		return -1;
+	len = strnlen(src, count - 1);
+	memcpy(dst, src, len);
+	dst[len] = '\0';
+	return src[len] ? -1: len;
 }
 
 static inline long atol(const char *s)
@@ -134,30 +250,7 @@ static inline int atoi(const char *s)
 {
 	return atol(s);
 }
-static inline size_t strlcpy(char *dst, const char *src, size_t size)
-{
-    unsigned long n;
-    char *p;
-    for (p = dst, n = 0; n + 1 < size && *src!= '\0';  ++p, ++src, ++n) {
-        *p = *src;
-    }
-    *p = '\0';
-    if(*src == '\0') {
-        return n;
-    } else {
-        return n + strlen(src);
-    }
-}
-static inline long strscpy(char *dst, const char *src, size_t count)
-{
-	size_t len;
-	if (count == 0)
-		return -1;
-	len = strnlen(src, count - 1);
-	memcpy(dst, src, len);
-	dst[len] = '\0';
-	return src[len] ? -1: len;
-}
+
 #ifdef __cplusplus
 }
 #endif
