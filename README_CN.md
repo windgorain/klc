@@ -53,41 +53,41 @@ sudo ./spf/kapp/sni_sniffer_load.sh
 #内核发送测试报文 
 sudo ./klctool load spf spf/kapp/pktgen.o -r
 #设置目标MAC地址 
-./klctool run pktgen dmac 01:02:03:04:05:06
+sudo ./klctool run pktgen dmac 01:02:03:04:05:06
 #开启测试, 例如: 发包接口配置为eth0, 4个发包线程 
-./klctool run pktgen start eth0 4
+sudo ./klctool run pktgen start eth0 4
 #设置Burst以提高发包性能, 例如设置为256 
-./klctool run pktgen burst 256
+sudo ./klctool run pktgen burst 256
 #显示状态 
-./klctool run pktgen show
+sudo ./klctool run pktgen show
 #停止发包 
-./klctool run pktgen stop
+sudo ./klctool run pktgen stop
 #卸载pktgen
-./klctool unload instance pktgen
+sudo ./klctool unload instance pktgen
 
 #DNS过滤
 sudo ./klctool load spf spf/kapp/dnsblock.o -r
 #添加规则
-./klctool run dnsblock add rule example.com
+sudo ./klctool run dnsblock add rule example.com
 #显示规则, 显示格式为"域名 : 匹配次数"
-./klctool run dnsblock show rule
+sudo ./klctool run dnsblock show rule
 #删除规则
-./klctool run dnsblock del rule example.com
+sudo ./klctool run dnsblock del rule example.com
 #卸载dnsblock
-./klctool unload instance dnsblock
+sudo ./klctool unload instance dnsblock
 
 #DNS Doctor, 将指定域名解析为指定IP地址
 sudo ./klctool load spf spf/kapp/dnsdoctor.o -r
 #设置IP地址
-./klctool run dnsdoctor ip 1.1.1.1
+sudo ./klctool run dnsdoctor ip 1.1.1.1
 #添加域名规则
-./klctool run dnsdoctor add rule example.com
+sudo ./klctool run dnsdoctor add rule example.com
 #显示规则, 显示格式为"域名 : 匹配次数"
-./klctool run dnsdoctor show rule
+sudo ./klctool run dnsdoctor show rule
 #删除规则
-./klctool run dnsdoctor del rule example.com
+sudo ./klctool run dnsdoctor del rule example.com
 #卸载dnsdoctor
-./klctool unload instance dnsdoctor
+sudo ./klctool unload instance dnsdoctor
 
 #驱动示例
 sudo ./klctool load spf drivers/snull.o

@@ -118,7 +118,7 @@ static int _klcko_loader_run_cmd(KLC_SPF_CMD_NL_S *d, OUT char *reply, int reply
 {
     U64 argv64[KLC_SPF_CMD_ARGC_MAX + 1];
     int i, ret;
-
+    
     if (d->argc > KLC_SPF_CMD_ARGC_MAX) {
         KO_Print("argc count exceed \n");
         return KO_ERR_BAD_PARAM;
@@ -201,6 +201,10 @@ static int _klcko_module_ioctl(KLC_MODULE_IOCTL_S *d, OUT void *reply, int reply
 
 static int _klcko_load_nl_do(int cmd, void *data, int data_len, OUT void *reply, int reply_size, OUT int *reply_len)
 {
+    if (! capable(CAP_SYS_ADMIN)) {
+        return KO_ERR_NEED_ROOT;
+    }
+
     if (cmd == KLC_NL_LOAD_BARE) {
         return _klcko_loader_load_bare(data);
     } else if (cmd == KLC_NL_LOAD_SPF) {

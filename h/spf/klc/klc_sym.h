@@ -22,6 +22,7 @@
 #include "klc_sym_thread.h"
 #include "klc_sym_cpus.h"
 #include "klc_sym_nf.h"
+#include "klc_sym_notifier.h"
 #include "klc_driver.h"
 
 #ifdef __cplusplus

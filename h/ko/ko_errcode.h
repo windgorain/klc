@@ -11,12 +11,13 @@ extern "C"
 #endif
 
 #define KO_ERR_DEF \
-    _(KO_ERR_FAIL, "failed") \
-    _(KO_ERR_BAD_PARAM, "bad pararm") \
-    _(KO_ERR_NO_SUCH, "no such") \
-    _(KO_ERR_EXIST, "already exist") \
-    _(KO_ERR_NO_MEMORY, "no memroy") \
-    _(KO_ERR_NOT_READY, "not ready") \
+    _(KO_ERR_FAIL, "Failed") \
+    _(KO_ERR_BAD_PARAM, "Bad pararm") \
+    _(KO_ERR_NO_SUCH, "No such") \
+    _(KO_ERR_EXIST, "Already exist") \
+    _(KO_ERR_NO_MEMORY, "No memroy") \
+    _(KO_ERR_NOT_READY, "Not ready") \
+    _(KO_ERR_NEED_ROOT, "Permission denied") \
 
 enum {
     KO_ERR_BASE = -2000,

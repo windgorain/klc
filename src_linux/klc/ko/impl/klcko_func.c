@@ -180,7 +180,7 @@ int klc_get_hz(void)
     return HZ;
 }
 
-int klc_capable_admin(void)
+bool klc_capable_admin(void)
 {
     return capable(CAP_SYS_ADMIN);
 }

@@ -122,6 +122,12 @@ static inline BOOL_T try_to_freeze(void)
     return try_to_freeze_fn();
 }
 
+
+static inline BOOL_T klc_capable_admin(void)
+{
+    return ulc_call_sym(0, klc_capable_admin);
+}
+
 #ifdef __cplusplus
 }
 #endif

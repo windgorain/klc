@@ -49,41 +49,41 @@ sudo ./spf/kapp/sni_sniffer_load.sh
 #load kernel pktgen
 sudo ./klctool load spf spf/kapp/pktgen.o -r
 #set destination MAC address
-./klctool run pktgen dmac 01:02:03:04:05:06
+sudo ./klctool run pktgen dmac 01:02:03:04:05:06
 #start, eg: interface eth0, 4 workers
-./klctool run pktgen start eth0 4
+sudo ./klctool run pktgen start eth0 4
 #set burst, eg: 256
-./klctool run pktgen burst 256
+sudo ./klctool run pktgen burst 256
 #show status
-./klctool run pktgen show
+sudo ./klctool run pktgen show
 #stop
-./klctool run pktgen stop
+sudo ./klctool run pktgen stop
 #unload pktgen
-./klctool unload instance pktgen
+sudo ./klctool unload instance pktgen
 
 #DNS filter
 sudo ./klctool load spf spf/kapp/dnsblock.o -r
 #add rule
-./klctool run dnsblock add rule example.com
+sudo ./klctool run dnsblock add rule example.com
 #show rules, format: "domain-name : match-count"
-./klctool run dnsblock show rule
+sudo ./klctool run dnsblock show rule
 #delete rule
-./klctool run dnsblock del rule example.com
+sudo ./klctool run dnsblock del rule example.com
 #unload dnsblock
-./klctool unload instance dnsblock
+sudo ./klctool unload instance dnsblock
 
 #DNS Doctor
 sudo ./klctool load spf spf/kapp/dnsdoctor.o -r
 #set IP address
-./klctool run dnsdoctor ip 1.1.1.1
+sudo ./klctool run dnsdoctor ip 1.1.1.1
 #add rule
-./klctool run dnsdoctor add rule example.com
+sudo ./klctool run dnsdoctor add rule example.com
 #show rules, format: "domain-name : match-count"
-./klctool run dnsdoctor show rule
+sudo ./klctool run dnsdoctor show rule
 #delte rule
-./klctool run dnsdoctor del rule example.com
+sudo ./klctool run dnsdoctor del rule example.com
 #unlaod dnsdoctor
-./klctool unload instance dnsdoctor
+sudo ./klctool unload instance dnsdoctor
 
 #Driver Example
 sudo ./klctool load spf drivers/snull.o
