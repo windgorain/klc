@@ -62,7 +62,6 @@ static int _klcko_loader_load_spf(KLC_LOAD_SPF_NL_S *d)
     p.map_count = d->map_count;
 
     if (g_mybpf_spf_ctrl->load_instance(&p) < 0) {
-        KO_Print("Load spf failed \n");
         return KO_ERR_FAIL;
     }
 

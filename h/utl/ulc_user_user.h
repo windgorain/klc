@@ -32,7 +32,7 @@ extern "C" {
 } while(0)
 #else
 #define RETURNI(_x, _fmt, ...)  do { \
-    printf(_fmt"\n", ##__VA_ARGS__); \
+    ulc_sys_printf(_fmt"\n", ##__VA_ARGS__); \
     return(_x); \
 } while(0)
 #endif

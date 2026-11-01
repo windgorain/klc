@@ -160,7 +160,7 @@ static int ulc_sys_printf(U64 fmt, U64 p1, U64 p2, U64 p3, U64 p4)
 
     _my_bpf_snprintf((U64)(LONG)(void*)info, (U64)sizeof(info), fmt, (U64)(LONG)(void*)param, 32LL);
 
-    printk("%s\n", info);
+    printk("%s", info);
 
     return 0;
 }

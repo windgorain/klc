@@ -27,7 +27,17 @@ static inline BOOL_T klc_is_sys32(void)
     return FALSE;
 }
 
+static inline void klc_print_string(const char *str)
+{
+    static void (*klc_print_string_fn)(const char *str) = NULL;
+    if (! klc_print_string_fn) {
+        klc_print_string_fn = ulc_sys_get_sym("klc_print_string");
+    }
 
+    if (klc_print_string_fn) {
+        klc_print_string_fn(str);
+    }
+}
 static inline void klc_compute_data_pointers(void *skb, void *tc)
 {
     ulc_call_sym(0, klc_compute_data_pointers, skb, tc);

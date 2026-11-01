@@ -89,6 +89,11 @@ sudo ./klctool run dnsdoctor del rule example.com
 #卸载dnsdoctor
 sudo ./klctool unload instance dnsdoctor
 
+#IP白名单, 只允许特定IP报文进入
+sudo ./klctool load spf spf/kapp/ipwlist.o -r
+#卸载
+sudo ./klctool unload instance ipwlist
+
 #驱动示例
 sudo ./klctool load spf drivers/snull.o
 sudo ./klctool load spf drivers/snull.o -i snull2
@@ -111,5 +116,6 @@ cd -
 | spf/kapp/pktgen | 内核发包工具 |
 | spf/kapp/dnsblock | DNS过滤 |
 | spf/kapp/dnsdoctor | 将指定域名解析为指定IP地址 |
+| spf/kapp/ipwlist | IP白名单 |
 | spf/drivers/snull | 简单的网络设备驱动 |
 

@@ -26,6 +26,10 @@
 #define KLCKO_OSBASE_BPF_PROG
 #endif
 
+void klc_print_string(const char *str)
+{
+    KO_Print("%s", str);
+}
 U32 klc_gfp_flags(int type)
 {
     switch (type) {

@@ -85,6 +85,11 @@ sudo ./klctool run dnsdoctor del rule example.com
 #unlaod dnsdoctor
 sudo ./klctool unload instance dnsdoctor
 
+#IP white list
+sudo ./klctool load spf spf/kapp/ipwlist.o -r
+#unload
+sudo ./klctool unload instance ipwlist
+
 #Driver Example
 sudo ./klctool load spf drivers/snull.o
 sudo ./klctool load spf drivers/snull.o -i snull2
@@ -107,5 +112,6 @@ cd -
 | spf/kapp/pktgen | kernel sending packet tool |
 | spf/kapp/dnsblock | DNS Filter |
 | spf/kapp/dnsdoctor | Map a specific domain name to a specific IP address |
+| spf/kapp/ipwlist | IP white list |
 | spf/drivers/snull | Simple network device driver |
 
