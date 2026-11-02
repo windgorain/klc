@@ -19,6 +19,7 @@ extern "C" {
     #define NF_REPEAT 4
     #define NF_STOP 5	
     #define NF_MAX_VERDICT NF_STOP
+    
     enum {
     	NFPROTO_UNSPEC =  0,
     	NFPROTO_INET   =  1,
@@ -30,6 +31,7 @@ extern "C" {
     	NFPROTO_DECNET = 12,
     	NFPROTO_NUMPROTO,
     };
+    
     enum nf_inet_hooks {
     	NF_INET_PRE_ROUTING,
     	NF_INET_LOCAL_IN,
@@ -40,6 +42,7 @@ extern "C" {
     	NF_INET_INGRESS = NF_INET_NUMHOOKS,
     };
 #endif
+
 struct net;
 struct nf_hook_ops;
 
@@ -67,6 +70,33 @@ static inline void nf_unregister_net_hooks(struct net *net, const struct nf_hook
     } else {
         ulc_call_sym(0, nf_unregister_net_hooks, net, reg, n);
     }
+}
+
+static inline void * klc_nf_priv(void *priv, void *skb, void *state)
+{
+    if (klc_is_sys32()) {
+        return (void*)(((U64)priv) & 0xffffffff);
+    }
+    
+    return priv;
+}
+
+static inline void * klc_nf_skb(void *priv, void *skb, void *state)
+{
+    if (klc_is_sys32()) {
+        return (void*)(((U64)priv) >> 32);
+    }
+    
+    return skb;
+}
+
+static inline void * klc_nf_state(void *priv, void *skb, void *state)
+{
+    if (klc_is_sys32()) {
+        return (void*)(((U64)skb) & 0xffffffff);
+    }
+    
+    return state;
 }
 
 #ifdef __cplusplus

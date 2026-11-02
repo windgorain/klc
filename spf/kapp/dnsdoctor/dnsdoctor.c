@@ -131,7 +131,7 @@ static void _dnsdoctor_nf_ipv4_pkt(void *skb)
 
 static unsigned int _dnsdoctor_nf_event(void *priv, void *skb, void *state)
 {
-    _dnsdoctor_nf_ipv4_pkt(skb);
+    _dnsdoctor_nf_ipv4_pkt(klc_nf_skb(priv, skb, state));
     return NF_ACCEPT;
 }
 

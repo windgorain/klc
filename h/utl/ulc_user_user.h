@@ -18,6 +18,11 @@ extern "C" {
     ulc_sys_printf(_msg, ##__VA_ARGS__); \
 }while(0)
 
+#define BARE_Puts(_info) do { \
+    char _msg[] = _info; \
+    ulc_sys_puts(_msg); \
+}while(0)
+
 
 #ifdef IN_ULC_BARE
 #define printf(_fmt, ...) BARE_Print(_fmt, ##__VA_ARGS__)

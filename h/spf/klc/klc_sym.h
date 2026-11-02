@@ -11,6 +11,7 @@
 #include "klc/klc_def.h"
 #include "utl/ulc_user_sys.h"
 #include "klc_sym_gen.h"
+#include "klc_sym_tm.h"
 #include "klc_sym_pid.h"
 #include "klc_sym_netns.h"
 #include "klc_sym_refcount.h"

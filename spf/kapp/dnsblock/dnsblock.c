@@ -98,7 +98,7 @@ static unsigned int _dnsblock_nf_ipv4_pkt(void *skb)
 
 static unsigned int _dnsblock_nf_event(void *priv, void *skb, void *state)
 {
-    return _dnsblock_nf_ipv4_pkt(skb);
+    return _dnsblock_nf_ipv4_pkt(klc_nf_skb(priv, skb, state));
 }
 
 static int _dnsblock_init(void)
