@@ -9138,6 +9138,7 @@ static void _ipwlist_cmd_help(char *buf, int buf_size)
             " set/unset tcp\n"
             " set/unset syn\n"
             " show status\n"
+            " show rule\n"
             " show log\n");
 }
 
@@ -9189,6 +9190,27 @@ static void _ipwlist_show_status(OUT char *buf, int buf_size)
     len += snprintf(buf + len, buf_size - len, "hash factor: %u\n", g_ipwlist_hash_factor);
 }
 
+static void _ipwlist_show_rule(OUT char *buf, int buf_size)
+{
+    int total_len = 0;
+
+    for (int i=0; i<ARRAY_SIZE(g_ipwlist_cn_list); i++) {
+        IPWLIST_S *n = &g_ipwlist_cn_list[i];
+        if (n->ip == 0) {
+            continue;
+        }
+
+        int len = snprintf(buf + total_len, buf_size - total_len,
+                "%pI4/%u\n", &n->ip, n->prefix);
+
+        if (len >= (buf_size - total_len)) {
+            break;
+        }
+
+        total_len += len;
+    }
+}
+
 SEC(".spf.cmd/cmd_main")
 static int _ipwlist_cmd_main(int argc, char **argv, char *output_buf, int buf_size)
 {
@@ -9203,6 +9225,8 @@ static int _ipwlist_cmd_main(int argc, char **argv, char *output_buf, int buf_si
         _ipwlist_show_log(output_buf, buf_size);
     } else if ((strcmp(argv[1], "show")== 0) && (strcmp(argv[2], "status") == 0)) {
         _ipwlist_show_status(output_buf, buf_size);
+    } else if ((strcmp(argv[1], "show")== 0) && (strcmp(argv[2], "rule") == 0)) {
+        _ipwlist_show_rule(output_buf, buf_size);
     } else if ((strcmp(argv[1], "set")== 0) && (strcmp(argv[2], "in") == 0)) {
         g_ipwlist_switch.in = 1;
     } else if ((strcmp(argv[1], "unset")== 0) && (strcmp(argv[2], "in") == 0)) {
