@@ -18,7 +18,7 @@ typedef struct {
     char domain[DNSBLOCK_DOMAIN_SIZE];
 }DNSBLOCK_RULE_S;
 
-static char g_dnsblock_nf_ops[128];
+static KLC_NF_REG_S g_dnsblock_nf_ops;
 static DNSBLOCK_RULE_S g_dnsblock_blacklist[DNSBLOCK_RULE_MAX];
 static unsigned int g_dnsblock_rule_count = 0;
 
@@ -104,7 +104,6 @@ static unsigned int _dnsblock_nf_event(void *priv, void *skb, void *state)
 static int _dnsblock_init(void)
 {
     int ret;
-    KLC_PARAM_S p;
     void *inet_net;
 
     inet_net = get_init_net();
@@ -112,26 +111,19 @@ static int _dnsblock_init(void)
         return -1;
     }
 
-    p.count = 5;
-    p.param[0] = (long)(void*)g_dnsblock_nf_ops;
-    p.param[1] = (long)(void*)_dnsblock_nf_event;
-    p.param[2] = NFPROTO_IPV4;
-    p.param[3] = NF_INET_LOCAL_OUT;
-    p.param[4] = -10L;
-
-    ret = klc_init_nf_hook_ops(&p);
+    ret = klc_init_nf_hook_ops(&g_dnsblock_nf_ops, _dnsblock_nf_event, NFPROTO_IPV4, NF_INET_LOCAL_OUT, -10);
     if (ret < 0) {
         return ret;
     }
 
-    return nf_register_net_hooks(inet_net, (void*)g_dnsblock_nf_ops, 1);
+    return nf_register_net_hooks(inet_net, &g_dnsblock_nf_ops, 1);
 }
 
 static int _dnsblock_fini(void)
 {
     void *inet_net = get_init_net();
     if (inet_net) {
-        nf_unregister_net_hooks(inet_net, (void*)g_dnsblock_nf_ops, 1);
+        nf_unregister_net_hooks(inet_net, &g_dnsblock_nf_ops, 1);
     }
 
     return 0;

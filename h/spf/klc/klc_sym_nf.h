@@ -46,13 +46,25 @@ extern "C" {
 struct net;
 struct nf_hook_ops;
 
-static inline int klc_init_nf_hook_ops(KLC_PARAM_S *p)
+typedef struct {
+    U64 data[16];
+}KLC_NF_REG_S;
+
+static inline int klc_init_nf_hook_ops(KLC_NF_REG_S *reg, void *func, U8 pf, U32 hooknum, int pri)
 {
-    return ulc_call_sym(-1, klc_init_nf_hook_ops, p);
+    KLC_PARAM_S p;
+
+    p.param[0] = (long)(void*)reg;
+    p.param[1] = (long)(void*)func;
+    p.param[2] = pf;
+    p.param[3] = hooknum;
+    p.param[4] = pri;
+
+    return ulc_call_sym(-1, klc_init_nf_hook_ops, &p);
 }
 
 
-static inline int nf_register_net_hooks(struct net *net, const struct nf_hook_ops *reg, unsigned int n)
+static inline int nf_register_net_hooks(struct net *net, const KLC_NF_REG_S *reg, unsigned int n)
 {
     if (klc_is_sys32()) {
         U64 p1 = (U32)(long)net; p1 |= (((U64)(U32)(long)reg) << 32);
@@ -62,7 +74,7 @@ static inline int nf_register_net_hooks(struct net *net, const struct nf_hook_op
     }
 }
 
-static inline void nf_unregister_net_hooks(struct net *net, const struct nf_hook_ops *reg, unsigned int n)
+static inline void nf_unregister_net_hooks(struct net *net, const KLC_NF_REG_S *reg, unsigned int n)
 {
     if (klc_is_sys32()) {
         U64 p1 = (U32)(long)net; p1 |= (((U64)(U32)(long)reg) << 32);

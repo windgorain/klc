@@ -10,7 +10,7 @@
 #include "utl/net.h"
 #include "utl/ip4_utl.h"
 #include "utl/jhash_utl.h"
-#include "bpf/ip_bpf.h"
+#include "bpf/tcp_bpf.h"
 
 #define IPWLIST_HASH_BUCKETS (1024*16)
 #define IPWLIST_BUCKET_DEPTH (8)
@@ -28,13 +28,24 @@ typedef struct {
     U64 drop_time; 
 }IPWLIST_DROP_LOG_S;
 
-static char g_ipwlist_nf_ops[128];
+typedef struct {
+    U32 in: 1;   
+    U32 out: 1;  
+    U32 proto_all: 1;  
+    U32 proto_udp: 1;  
+    U32 proto_tcp: 1;  
+    U32 syn: 1;  
+}IPWLIST_SWITCH_S;
+
+static KLC_NF_REG_S g_ipwlist_nf_ops_in;
+static KLC_NF_REG_S g_ipwlist_nf_ops_out;
 
 #define IPWLIST_DROP_LOG_MAX (1024*8)
 
 static IPWLIST_DROP_LOG_S g_ipwlist_drop_log[IPWLIST_DROP_LOG_MAX];
 static U32 g_ipwlist_drop_log_idx = 0; 
 static U32 g_ipwlist_drop_log_count = 0; 
+static IPWLIST_SWITCH_S g_ipwlist_switch;
 
 
 static U32 g_ipwlist_hash_factor;
@@ -8903,6 +8914,52 @@ static U32 _ipwlist_match_ip(U32 ip)
     return 0;
 }
 
+static unsigned int _ipwlist_do_filter(IP_HEAD_S *iphdr)
+{
+    if (_ipwlist_match_ip(iphdr->unSrcIp.uiIp) > 0) {
+        return NF_ACCEPT; 
+    }
+
+    _ipwlist_drop_log(iphdr->unSrcIp.uiIp);
+    return NF_DROP;
+}
+
+static unsigned int _ipwlist_nf_tcp_pkt(IP_HEAD_S *iphdr, void *data_end)
+{
+    if ((g_ipwlist_switch.proto_all == 0) && (g_ipwlist_switch.proto_tcp == 0)) {
+        return NF_ACCEPT;
+    }
+
+    TCP_HEAD_S *tcp_hdr = TCPBPF_GetTcpHeaderFromIP(iphdr, data_end);
+    if (! tcp_hdr) {
+        return NF_ACCEPT;
+    }
+
+    if ((g_ipwlist_switch.syn) && (! TCP_FLAG_IS_SYN(tcp_hdr->ucFlag))) {
+        return NF_ACCEPT;
+    }
+
+    return _ipwlist_do_filter(iphdr);
+}
+
+static unsigned int _ipwlist_nf_udp_pkt(IP_HEAD_S *iphdr)
+{
+    if ((g_ipwlist_switch.proto_all == 0) && (g_ipwlist_switch.proto_udp == 0)) {
+        return NF_ACCEPT;
+    }
+
+    return _ipwlist_do_filter(iphdr);
+}
+
+static unsigned int _ipwlist_nf_other_pkt(IP_HEAD_S *iphdr)
+{
+    if (g_ipwlist_switch.proto_all == 0) {
+        return NF_ACCEPT;
+    }
+
+    return _ipwlist_do_filter(iphdr);
+}
+
 static unsigned int _ipwlist_nf_ipv4_pkt(void *skb)
 {
     void *data = klc_skb_data(skb);
@@ -8914,16 +8971,34 @@ static unsigned int _ipwlist_nf_ipv4_pkt(void *skb)
         return NF_ACCEPT;
     }
 
-    if (_ipwlist_match_ip(iphdr->unSrcIp.uiIp) == 0) {
-        _ipwlist_drop_log(iphdr->unSrcIp.uiIp);
-        return NF_DROP;
+    U8 proto = iphdr->ucProto;
+
+    if (proto == IP_PROTO_TCP) {
+        return _ipwlist_nf_tcp_pkt(iphdr, data_end);
     }
 
-    return NF_ACCEPT;
+    if (proto == IP_PROTO_UDP) {
+        return _ipwlist_nf_udp_pkt(iphdr);
+    }
+
+    return _ipwlist_nf_other_pkt(iphdr);
 }
 
-static unsigned int _ipwlist_nf_event(void *priv, void *skb, void *state)
+static unsigned int _ipwlist_nf_event_in(void *priv, void *skb, void *state)
 {
+    if (! g_ipwlist_switch.in) {
+        return NF_ACCEPT;
+    }
+
+    return _ipwlist_nf_ipv4_pkt(klc_nf_skb(priv, skb, state));
+}
+
+static unsigned int _ipwlist_nf_event_out(void *priv, void *skb, void *state)
+{
+    if (! g_ipwlist_switch.out) {
+        return NF_ACCEPT;
+    }
+
     return _ipwlist_nf_ipv4_pkt(klc_nf_skb(priv, skb, state));
 }
 
@@ -8963,22 +9038,20 @@ static int _ipwlist_try_init_hash(void)
 
 static int _ipwlist_init_hash(void)
 {
-    for (int i=0; i<32*1024; i++) {
+    for (int i=0; i<1024; i++) {
         g_ipwlist_hash_factor = i;
         if (_ipwlist_try_init_hash() == 0) {
             return 0;
         }
     }
 
-    printf("Error: ipwlist hash conflict\n");
+    printf("Error: ipwlist hash conflict. Please change the hash table\n");
 
     return -1;
 }
 
 static int _ipwlist_init(void)
 {
-    int ret;
-    KLC_PARAM_S p;
     void *inet_net;
 
     if (_ipwlist_init_hash() < 0) {
@@ -8990,26 +9063,31 @@ static int _ipwlist_init(void)
         return -1;
     }
 
-    p.count = 5;
-    p.param[0] = (long)(void*)g_ipwlist_nf_ops;
-    p.param[1] = (long)(void*)_ipwlist_nf_event;
-    p.param[2] = NFPROTO_IPV4;
-    p.param[3] = NF_INET_PRE_ROUTING;
-    p.param[4] = -10L;
-
-    ret = klc_init_nf_hook_ops(&p);
-    if (ret < 0) {
-        return ret;
+    klc_init_nf_hook_ops(&g_ipwlist_nf_ops_in, _ipwlist_nf_event_in, NFPROTO_IPV4, NF_INET_PRE_ROUTING, -10);
+    if (nf_register_net_hooks(inet_net, &g_ipwlist_nf_ops_in, 1) < 0) {
+        return -1;
     }
 
-    return nf_register_net_hooks(inet_net, (void*)g_ipwlist_nf_ops, 1);
+    klc_init_nf_hook_ops(&g_ipwlist_nf_ops_out, _ipwlist_nf_event_out, NFPROTO_IPV4, NF_INET_LOCAL_OUT, -10);
+    if (nf_register_net_hooks(inet_net, &g_ipwlist_nf_ops_out, 1) < 0) {
+        nf_unregister_net_hooks(inet_net, &g_ipwlist_nf_ops_in, 1);
+        return -1;
+    }
+
+    
+    g_ipwlist_switch.in = 1;
+    g_ipwlist_switch.proto_all = 1;
+    g_ipwlist_switch.syn = 1;
+
+    return 0;
 }
 
 static int _ipwlist_fini(void)
 {
     void *inet_net = get_init_net();
     if (inet_net) {
-        nf_unregister_net_hooks(inet_net, (void*)g_ipwlist_nf_ops, 1);
+        nf_unregister_net_hooks(inet_net, &g_ipwlist_nf_ops_in, 1);
+        nf_unregister_net_hooks(inet_net, &g_ipwlist_nf_ops_out, 1);
     }
 
     return 0;
@@ -9029,6 +9107,12 @@ int _nf_event(U32 event)
 static void _ipwlist_cmd_help(char *buf, int buf_size)
 {
     snprintf(buf, buf_size, "Usage:\n"
+            " set/unset in\n"
+            " set/unset out\n"
+            " set/unset udp\n"
+            " set/unset tcp\n"
+            " set/unset syn\n"
+            " show status\n"
             " show log\n");
 }
 
@@ -9067,6 +9151,19 @@ static void _ipwlist_show_log(OUT char *buf, int buf_size)
     } while (start != end);
 }
 
+static void _ipwlist_show_status(OUT char *buf, int buf_size)
+{
+    int len = 0;
+
+    len += snprintf(buf + len, buf_size - len, "in: %u\n", g_ipwlist_switch.in);
+    len += snprintf(buf + len, buf_size - len, "out: %u\n", g_ipwlist_switch.out);
+    len += snprintf(buf + len, buf_size - len, "all proto: %u\n", g_ipwlist_switch.proto_all);
+    len += snprintf(buf + len, buf_size - len, "udp: %u\n", g_ipwlist_switch.proto_udp);
+    len += snprintf(buf + len, buf_size - len, "tcp: %u\n", g_ipwlist_switch.proto_tcp);
+    len += snprintf(buf + len, buf_size - len, "syn: %u\n", g_ipwlist_switch.syn);
+    len += snprintf(buf + len, buf_size - len, "hash factor: %u\n", g_ipwlist_hash_factor);
+}
+
 SEC(".spf.cmd/cmd_main")
 static int _ipwlist_cmd_main(int argc, char **argv, char *output_buf, int buf_size)
 {
@@ -9079,6 +9176,32 @@ static int _ipwlist_cmd_main(int argc, char **argv, char *output_buf, int buf_si
 
     if ((strcmp(argv[1], "show")== 0) && (strcmp(argv[2], "log") == 0)) {
         _ipwlist_show_log(output_buf, buf_size);
+    } else if ((strcmp(argv[1], "show")== 0) && (strcmp(argv[2], "status") == 0)) {
+        _ipwlist_show_status(output_buf, buf_size);
+    } else if ((strcmp(argv[1], "set")== 0) && (strcmp(argv[2], "in") == 0)) {
+        g_ipwlist_switch.in = 1;
+    } else if ((strcmp(argv[1], "unset")== 0) && (strcmp(argv[2], "in") == 0)) {
+        g_ipwlist_switch.in = 0;
+    } else if ((strcmp(argv[1], "set")== 0) && (strcmp(argv[2], "out") == 0)) {
+        g_ipwlist_switch.out = 1;
+    } else if ((strcmp(argv[1], "unset")== 0) && (strcmp(argv[2], "out") == 0)) {
+        g_ipwlist_switch.out = 0;
+    } else if ((strcmp(argv[1], "set")== 0) && (strcmp(argv[2], "allproto") == 0)) {
+        g_ipwlist_switch.proto_all = 1;
+    } else if ((strcmp(argv[1], "unset")== 0) && (strcmp(argv[2], "allproto") == 0)) {
+        g_ipwlist_switch.proto_all = 0;
+    } else if ((strcmp(argv[1], "set")== 0) && (strcmp(argv[2], "udp") == 0)) {
+        g_ipwlist_switch.proto_udp = 1;
+    } else if ((strcmp(argv[1], "unset")== 0) && (strcmp(argv[2], "udp") == 0)) {
+        g_ipwlist_switch.proto_udp = 0;
+    } else if ((strcmp(argv[1], "set")== 0) && (strcmp(argv[2], "tcp") == 0)) {
+        g_ipwlist_switch.proto_tcp = 1;
+    } else if ((strcmp(argv[1], "unset")== 0) && (strcmp(argv[2], "tcp") == 0)) {
+        g_ipwlist_switch.proto_tcp = 0;
+    } else if ((strcmp(argv[1], "set")== 0) && (strcmp(argv[2], "syn") == 0)) {
+        g_ipwlist_switch.syn = 1;
+    } else if ((strcmp(argv[1], "unset")== 0) && (strcmp(argv[2], "syn") == 0)) {
+        g_ipwlist_switch.syn = 0;
     } else {
         _ipwlist_cmd_help(output_buf, buf_size);
         return -1;

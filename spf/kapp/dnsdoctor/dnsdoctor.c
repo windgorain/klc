@@ -19,7 +19,7 @@ typedef struct {
     char domain[DNSBLOCK_DOMAIN_SIZE];
 }DNSBLOCK_RULE_S;
 
-static char g_dnsdoctor_nf_ops[128];
+static KLC_NF_REG_S g_dnsdoctor_nf_ops;
 static DNSBLOCK_RULE_S g_dnsdoctor_rules[DNSBLOCK_RULE_MAX];
 static U32 g_dnsdoctor_rule_count = 0;
 static U32 g_dnsdockor_target_ip = 0;
@@ -138,7 +138,6 @@ static unsigned int _dnsdoctor_nf_event(void *priv, void *skb, void *state)
 static int _dnsdoctor_init(void)
 {
     int ret;
-    KLC_PARAM_S p;
     void *inet_net;
 
     inet_net = get_init_net();
@@ -146,26 +145,19 @@ static int _dnsdoctor_init(void)
         return -1;
     }
 
-    p.count = 5;
-    p.param[0] = (long)(void*)g_dnsdoctor_nf_ops;
-    p.param[1] = (long)(void*)_dnsdoctor_nf_event;
-    p.param[2] = NFPROTO_IPV4;
-    p.param[3] = NF_INET_PRE_ROUTING;
-    p.param[4] = -10L;
-
-    ret = klc_init_nf_hook_ops(&p);
+    ret = klc_init_nf_hook_ops(&g_dnsdoctor_nf_ops, _dnsdoctor_nf_event, NFPROTO_IPV4, NF_INET_PRE_ROUTING, -10);
     if (ret < 0) {
         return ret;
     }
 
-    return nf_register_net_hooks(inet_net, (void*)g_dnsdoctor_nf_ops, 1);
+    return nf_register_net_hooks(inet_net, &g_dnsdoctor_nf_ops, 1);
 }
 
 static int _dnsdoctor_fini(void)
 {
     void *inet_net = get_init_net();
     if (inet_net) {
-        nf_unregister_net_hooks(inet_net, (void*)g_dnsdoctor_nf_ops, 1);
+        nf_unregister_net_hooks(inet_net, &g_dnsdoctor_nf_ops, 1);
     }
 
     return 0;
