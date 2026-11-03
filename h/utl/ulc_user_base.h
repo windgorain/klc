@@ -23,9 +23,11 @@ extern "C" {
 
 #define ulc_sys_snprintf(buf,size,_fmt, ...) ({ \
     int _count = BS_ARG_COUNT(__VA_ARGS__); \
-    U64 _d[10]; \
+    U64 _d[12]; \
     long _ret = -1; \
     switch (_count) { \
+        case 12: _d[11]=(unsigned long long)BS_ARG_GET(12, ##__VA_ARGS__); \
+        case 11: _d[10]=(unsigned long long)BS_ARG_GET(11, ##__VA_ARGS__); \
         case 10: _d[9]=(unsigned long long)BS_ARG_GET(10, ##__VA_ARGS__); \
         case 9: _d[8]=(unsigned long long)BS_ARG_GET(9, ##__VA_ARGS__); \
         case 8: _d[7]=(unsigned long long)BS_ARG_GET(8, ##__VA_ARGS__); \
@@ -38,7 +40,7 @@ extern "C" {
         case 1: _d[0]=(unsigned long long)BS_ARG_GET(1, ##__VA_ARGS__); \
         case 0: break; \
     } \
-    if (_count <= 10) { _ret = bpf_snprintf(buf,size,_fmt,_d,_count*8);} \
+    if (_count <= 12) { _ret = bpf_snprintf(buf,size,_fmt,_d,_count*8);} \
     if (_ret > 0) _ret --;  \
     _ret; \
 })

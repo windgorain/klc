@@ -25,7 +25,13 @@ extern "C"
 #define _BS_ARG_GET8(a0,a1,a2,a3,a4,a5,a6,a7,a8,...) (a8)
 #define _BS_ARG_GET9(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,...) (a9)
 #define _BS_ARG_GET10(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,...) (a10)
-#define BS_ARG_GET(N,...) _BS_ARG_GET##N(0,##__VA_ARGS__,0,0,0,0,0,0,0,0,0,0)
+#define _BS_ARG_GET11(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,...) (a11)
+#define _BS_ARG_GET12(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,...) (a12)
+#define _BS_ARG_GET13(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,...) (a13)
+#define _BS_ARG_GET14(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,...) (a14)
+#define _BS_ARG_GET15(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,...) (a15)
+#define _BS_ARG_GET16(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,...) (a16)
+#define BS_ARG_GET(N,...) _BS_ARG_GET##N(0,##__VA_ARGS__,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
 
 #ifdef __cplusplus
 }

@@ -11,9 +11,15 @@
 #include "utl/ip4_utl.h"
 #include "utl/jhash_utl.h"
 #include "bpf/tcp_bpf.h"
+#include "bpf/udp_bpf.h"
 
 #define IPWLIST_HASH_BUCKETS (1024*16)
 #define IPWLIST_BUCKET_DEPTH (8)
+
+enum {
+    _IPWLIST_DIR_IN = 0,
+    _IPWLIST_DIR_OUT
+};
 
 typedef struct {
     union {
@@ -24,8 +30,11 @@ typedef struct {
 }IPWLIST_S;
 
 typedef struct {
-    U32 sip;  
-    U64 drop_time; 
+    U32 ip;         
+    U16 dport;      
+    U8 ip_proto;    
+    U8 dir: 1;
+    U64 drop_time;  
 }IPWLIST_DROP_LOG_S;
 
 typedef struct {
@@ -8863,17 +8872,21 @@ static IPWLIST_S g_ipwlist_cn_list[] = {
 {.ip8={223,255,252,0},23},
 };
 
-static void _ipwlist_drop_log(U32 sip)
+static void _ipwlist_drop_log(U8 dir, U32 ip, U8 ip_proto, U16 dport)
 {
     struct timespec64 ts;
 
-    if (! sip) {
+    if (! ip) {
         return;
     }
 
     ktime_get_real_ts64(&ts);
+
     g_ipwlist_drop_log[g_ipwlist_drop_log_idx].drop_time = ts.tv_sec;
-    g_ipwlist_drop_log[g_ipwlist_drop_log_idx].sip = sip;
+    g_ipwlist_drop_log[g_ipwlist_drop_log_idx].dir = dir;
+    g_ipwlist_drop_log[g_ipwlist_drop_log_idx].ip = ip;
+    g_ipwlist_drop_log[g_ipwlist_drop_log_idx].dport = dport;
+    g_ipwlist_drop_log[g_ipwlist_drop_log_idx].ip_proto = ip_proto;
 
     if (g_ipwlist_drop_log_idx + 1 == IPWLIST_DROP_LOG_MAX) {
         g_ipwlist_drop_log_idx = 0;
@@ -8914,17 +8927,24 @@ static U32 _ipwlist_match_ip(U32 ip)
     return 0;
 }
 
-static unsigned int _ipwlist_do_filter(IP_HEAD_S *iphdr)
+static unsigned int _ipwlist_do_filter(U8 dir, IP_HEAD_S *iphdr, U8 ip_proto, U16 dport)
 {
-    if (_ipwlist_match_ip(iphdr->unSrcIp.uiIp) > 0) {
+    U32 ip = iphdr->unSrcIp.uiIp;
+
+    if (dir == _IPWLIST_DIR_OUT) {
+        ip = iphdr->unDstIp.uiIp;
+    }
+
+    if (_ipwlist_match_ip(ip) > 0) {
         return NF_ACCEPT; 
     }
 
-    _ipwlist_drop_log(iphdr->unSrcIp.uiIp);
+    _ipwlist_drop_log(dir, ip, ip_proto, dport);
+
     return NF_DROP;
 }
 
-static unsigned int _ipwlist_nf_tcp_pkt(IP_HEAD_S *iphdr, void *data_end)
+static unsigned int _ipwlist_nf_tcp_pkt(U8 dir, IP_HEAD_S *iphdr, void *data_end)
 {
     if ((g_ipwlist_switch.proto_all == 0) && (g_ipwlist_switch.proto_tcp == 0)) {
         return NF_ACCEPT;
@@ -8939,28 +8959,33 @@ static unsigned int _ipwlist_nf_tcp_pkt(IP_HEAD_S *iphdr, void *data_end)
         return NF_ACCEPT;
     }
 
-    return _ipwlist_do_filter(iphdr);
+    return _ipwlist_do_filter(dir, iphdr, IP_PROTO_TCP, tcp_hdr->usDstPort);
 }
 
-static unsigned int _ipwlist_nf_udp_pkt(IP_HEAD_S *iphdr)
+static unsigned int _ipwlist_nf_udp_pkt(U8 dir, IP_HEAD_S *iphdr, void *data_end)
 {
     if ((g_ipwlist_switch.proto_all == 0) && (g_ipwlist_switch.proto_udp == 0)) {
         return NF_ACCEPT;
     }
 
-    return _ipwlist_do_filter(iphdr);
+    UDP_HEAD_S *udp_hdr = UDPBPF_GetUdpHeaderFromIP(iphdr, data_end);
+    if (! udp_hdr) {
+        return NF_ACCEPT;
+    }
+
+    return _ipwlist_do_filter(dir, iphdr, IP_PROTO_UDP, udp_hdr->usDstPort);
 }
 
-static unsigned int _ipwlist_nf_other_pkt(IP_HEAD_S *iphdr)
+static unsigned int _ipwlist_nf_other_pkt(U8 dir, IP_HEAD_S *iphdr)
 {
     if (g_ipwlist_switch.proto_all == 0) {
         return NF_ACCEPT;
     }
 
-    return _ipwlist_do_filter(iphdr);
+    return _ipwlist_do_filter(dir, iphdr, iphdr->ucProto, 0);
 }
 
-static unsigned int _ipwlist_nf_ipv4_pkt(void *skb)
+static unsigned int _ipwlist_nf_ipv4_pkt(void *skb, U8 dir)
 {
     void *data = klc_skb_data(skb);
     int head_len = klc_skb_head_len(skb);
@@ -8974,14 +8999,14 @@ static unsigned int _ipwlist_nf_ipv4_pkt(void *skb)
     U8 proto = iphdr->ucProto;
 
     if (proto == IP_PROTO_TCP) {
-        return _ipwlist_nf_tcp_pkt(iphdr, data_end);
+        return _ipwlist_nf_tcp_pkt(dir, iphdr, data_end);
     }
 
     if (proto == IP_PROTO_UDP) {
-        return _ipwlist_nf_udp_pkt(iphdr);
+        return _ipwlist_nf_udp_pkt(dir, iphdr, data_end);
     }
 
-    return _ipwlist_nf_other_pkt(iphdr);
+    return _ipwlist_nf_other_pkt(dir, iphdr);
 }
 
 static unsigned int _ipwlist_nf_event_in(void *priv, void *skb, void *state)
@@ -8990,7 +9015,7 @@ static unsigned int _ipwlist_nf_event_in(void *priv, void *skb, void *state)
         return NF_ACCEPT;
     }
 
-    return _ipwlist_nf_ipv4_pkt(klc_nf_skb(priv, skb, state));
+    return _ipwlist_nf_ipv4_pkt(klc_nf_skb(priv, skb, state), _IPWLIST_DIR_IN);
 }
 
 static unsigned int _ipwlist_nf_event_out(void *priv, void *skb, void *state)
@@ -8999,7 +9024,7 @@ static unsigned int _ipwlist_nf_event_out(void *priv, void *skb, void *state)
         return NF_ACCEPT;
     }
 
-    return _ipwlist_nf_ipv4_pkt(klc_nf_skb(priv, skb, state));
+    return _ipwlist_nf_ipv4_pkt(klc_nf_skb(priv, skb, state), _IPWLIST_DIR_OUT);
 }
 
 static int _ipwlist_add_2_hash(IPWLIST_S *n, U32 id)
@@ -9119,7 +9144,7 @@ static void _ipwlist_cmd_help(char *buf, int buf_size)
 static void _ipwlist_show_log(OUT char *buf, int buf_size)
 {
     U32 end = g_ipwlist_drop_log_idx;
-    U32 start = 0;
+    U32 index = 0;
     int total_len = 0;
 
     if (g_ipwlist_drop_log_count == 0) {
@@ -9127,28 +9152,28 @@ static void _ipwlist_show_log(OUT char *buf, int buf_size)
     }
 
     if (g_ipwlist_drop_log_count == IPWLIST_DROP_LOG_MAX) {
-        start = end;
+        index = end;
     }
 
     do {
         KLC_TIME_S t = {0};
-        U8 *ip8 = (void*)&g_ipwlist_drop_log[start].sip;
-        time64_to_tm(g_ipwlist_drop_log[start].drop_time, 0, &t);
+        IPWLIST_DROP_LOG_S *n = &g_ipwlist_drop_log[index];
+        time64_to_tm(n->drop_time, 0, &t);
         int len = snprintf(buf + total_len, buf_size - total_len,
-                "[%04lu-%02d-%02d %02d:%02d:%02d] drop %u.%u.%u.%u\n",
+                "[%04lu-%02d-%02d %02d:%02d:%02d] dir=%s, ip:%pI4, protocol:%u, dport:%u\n",
                 t.tm_year + 1900, t.tm_mon + 1, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec,
-                ip8[0], ip8[1], ip8[2], ip8[3]);
+                n->dir == _IPWLIST_DIR_IN ? "in" : "out", &n->ip, n->ip_proto, ntohs(n->dport));
         if (len >= (buf_size - total_len)) {
             break;
         }
 
         total_len += len;
 
-        start ++;
-        if (start >= IPWLIST_DROP_LOG_MAX) {
-            start = 0;
+        index ++;
+        if (index >= IPWLIST_DROP_LOG_MAX) {
+            index = 0;
         }
-    } while (start != end);
+    } while (index != end);
 }
 
 static void _ipwlist_show_status(OUT char *buf, int buf_size)
